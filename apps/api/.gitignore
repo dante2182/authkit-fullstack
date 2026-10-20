@@ -1,0 +1,31 @@
+# Dependencias
+node_modules
+
+# Variables de entorno (secretos)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Compilación TypeScript
+dist
+*.tsbuildinfo
+
+# Cobertura de tests
+coverage
+
+# Cliente generado por Prisma
+/generated/prisma
+
+# Lockfile local de skills
+skills-lock.json
+
+# Artefactos de sistema
+Thumbs.db
+desktop.ini
+.DS_Store

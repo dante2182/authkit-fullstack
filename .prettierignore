@@ -1,0 +1,35 @@
+# Dependencias y artefactos de build (el patrón aplica en cualquier nivel)
+node_modules
+dist
+dist-ssr
+build
+coverage
+.generated
+generated
+.vite
+.next
+.turbo
+.pnpm-store
+*.tsbuildinfo
+*.min.*
+
+# Las apps se formatean con su propio config/plugins (tailwind / prisma)
+# desde dentro de cada app: pnpm -r --if-present format
+apps
+
+# Migraciones auto-generadas por Prisma
+migrations
+
+# Scripts de Husky (shell, sin parser en Prettier)
+.husky
+
+# Lockfile y licencia (se mantienen tal cual)
+pnpm-lock.yaml
+LICENSE
+
+# Variables de entorno
+.env
+.env.*
+
+# Logs
+*.log

@@ -1,0 +1,31 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // Layout de salida: dist/index.js (así "start": "node dist/index.js" funciona)
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Entorno: Node con ESM
+    "module": "nodenext",
+    "target": "esnext",
+    "types": ["node"],
+
+    // Salidas
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Chequeo estricto
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Recomendado
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}

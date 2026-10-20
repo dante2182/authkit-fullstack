@@ -1,0 +1,45 @@
+{
+  "name": "authkit-fullstack",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AuthKit: monorepo fullstack de autenticación (React + Vite + Tailwind / Express + Prisma + better-auth)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "prepare": "husky",
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r --if-present lint",
+    "lint:fix": "pnpm -r --if-present lint:fix",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "format": "pnpm -r --if-present format && prettier --write .",
+    "format:check": "pnpm -r --if-present format:check && prettier --check .",
+    "commit": "cz",
+    "commit:dry": "cz --dry-run"
+  },
+  "config": {
+    "commitizen": {
+      "path": "@commitlint/cz-commitlint"
+    }
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.14.0",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@12.14.0",
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@commitlint/cz-commitlint": "^21.2.4",
+    "commitizen": "^4.3.2",
+    "husky": "^9.1.7",
+    "inquirer": "^12.11.1",
+    "prettier": "^3.9.10"
+  }
+}

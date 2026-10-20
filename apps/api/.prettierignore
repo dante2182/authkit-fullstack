@@ -1,0 +1,19 @@
+# Build output
+dist
+*.tsbuildinfo
+
+# Cliente generado por Prisma
+generated
+
+# Migraciones auto-generadas por Prisma (no se formatean a mano)
+prisma/migrations
+
+# Variables de entorno
+.env
+.env.*
+
+# Lockfile
+pnpm-lock.yaml
+
+# Dependencias
+node_modules

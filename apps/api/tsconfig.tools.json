@@ -1,0 +1,10 @@
+{
+  // Ficheros de configuración en la raíz del proyecto (no forman parte del build).
+  // Se tipan aparte para que "typecheck" los siga cubriendo.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true
+  },
+  "include": ["prisma7.config.ts"]
+}

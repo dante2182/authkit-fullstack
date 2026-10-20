@@ -1,0 +1,25 @@
+# Normalización de finales de línea: LF en todo el repo (override de core.autocrlf en Windows)
+* text=auto eol=lf
+
+# Archivos binarios (git no debe tocarlos)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.avif binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+*.zip binary
+
+# Scripts de Windows (deben conservar CRLF)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Archivos generados: fuera de diffs y de las estadísticas de lenguaje
+pnpm-lock.yaml -diff linguist-generated
