@@ -12,8 +12,8 @@
     "lint": "pnpm -r --if-present lint",
     "lint:fix": "pnpm -r --if-present lint:fix",
     "typecheck": "pnpm -r --if-present typecheck",
-    "format": "pnpm -r --if-present format && prettier --write .",
-    "format:check": "pnpm -r --if-present format:check && prettier --check .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "commit": "cz",
     "commit:dry": "cz --dry-run"
   },
@@ -40,6 +40,8 @@
     "commitizen": "^4.3.2",
     "husky": "^9.1.7",
     "inquirer": "^12.11.1",
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "prettier-plugin-prisma": "^5.0.0",
+    "prettier-plugin-tailwindcss": "^0.8.1"
   }
 }

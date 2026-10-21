@@ -51,18 +51,22 @@ pnpm dev
 | `pnpm lint`         | ESLint en todo el monorepo                         |
 | `pnpm lint:fix`     | ESLint con `--fix`                                 |
 | `pnpm typecheck`    | TypeScript sin emitir en todas las apps            |
-| `pnpm format`       | Prettier escribe todo el repo                      |
+| `pnpm format`       | Prettier formatea todo el monorepo (raíz + apps)   |
 | `pnpm format:check` | Prettier en modo verificación (lo que usa el hook) |
 | `pnpm commit`       | Asistente interactivo de commits (commitizen)      |
 | `pnpm commit:dry`   | Igual, pero sin crear el commit (simulación)       |
 
 Atajos por app: `pnpm --filter web <script>` y `pnpm --filter api <script>`.
+El formato se ejecuta siempre desde la raíz: las apps no tienen scripts `format` propios.
 
 ## Calidad de código
 
 - **Prettier** es la única fuente de verdad del formato: `semi: false`, comillas simples, 100 columnas, `lf`.
-  Config raíz para ficheros de la raíz y config por app para añadir plugins
-  (`prettier-plugin-tailwindcss` en web ordena las clases, `prettier-plugin-prisma` en api).
+  Hay **una sola configuración en la raíz** (`prettier.config.mjs` + `.prettierignore`) con los plugins
+  `prettier-plugin-tailwindcss` (ordena las clases de web según `apps/web/src/index.css`) y
+  `prettier-plugin-prisma` (formatea el schema de Prisma). No hay configs por app.
+  Así el CLI (`pnpm format:check`) y el editor (Ctrl+S con la extensión de Prettier) usan exactamente
+  las mismas reglas y plugins, sin depender de `node_modules` de cada app.
 - **ESLint** en las dos apps con `eslint-config-prettier` al final, así que **no hay reglas de estilo en conflicto**:
   Prettier formatea, ESLint detecta errores.
 - **Husky** ejecuta dos hooks en cada commit:
@@ -171,6 +175,8 @@ authkit-fullstack/
 │     └─ src/
 ├─ .husky/            # hooks de git (pre-commit y commit-msg)
 ├─ commitlint.config.mjs # reglas de commit + configuración del asistente
+├─ prettier.config.mjs   # config única de Prettier (raíz + apps)
+├─ .prettierignore       # exclusiones únicas de Prettier
 └─ pnpm-workspace.yaml
 ```
 

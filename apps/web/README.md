@@ -11,11 +11,10 @@ pnpm preview      # sirve el build de dist/
 pnpm lint         # ESLint (flat config)
 pnpm lint:fix     # ESLint con --fix
 pnpm typecheck    # solo TypeScript, sin emitir
-pnpm format       # Prettier (con ordenación de clases de Tailwind)
-pnpm format:check # Prettier en modo verificación
 ```
 
 Desde la raíz del monorepo: `pnpm --filter web <comando>`.
+El formato se ejecuta siempre desde la raíz (`pnpm format` / `pnpm format:check`), no por app.
 
 ## Variables de entorno
 
@@ -42,7 +41,8 @@ El **React Compiler** está activado vía `babel-plugin-react-compiler` en `vite
 
 ## Notas de formato y lint
 
-- Prettier vive en `prettier.config.mjs` e incluye `prettier-plugin-tailwindcss`
-  (`tailwindStylesheet: ./src/index.css`, `tailwindFunctions: ['cn', 'clsx', 'cva', 'twMerge']`):
-  las clases se ordenan solas al formatear.
+- Prettier se configura una sola vez en la raíz (`prettier.config.mjs`) e incluye
+  `prettier-plugin-tailwindcss` (`tailwindStylesheet: ./apps/web/src/index.css`,
+  `tailwindFunctions: ['cn', 'clsx', 'cva', 'twMerge']`): las clases se ordenan solas al formatear.
+  No hay `prettier.config.mjs` propio en esta app.
 - ESLint (`eslint.config.js`) usa `eslint-config-prettier` al final, por lo que no duplica reglas de estilo.

@@ -13,10 +13,6 @@ generated
 *.tsbuildinfo
 *.min.*
 
-# Las apps se formatean con su propio config/plugins (tailwind / prisma)
-# desde dentro de cada app: pnpm -r --if-present format
-apps
-
 # Migraciones auto-generadas por Prisma
 migrations
 
@@ -25,6 +21,8 @@ migrations
 
 # Lockfile y licencia (se mantienen tal cual)
 pnpm-lock.yaml
+package-lock.json
+yarn.lock
 LICENSE
 
 # Variables de entorno
