@@ -14,13 +14,8 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "commit": "cz",
-    "commit:dry": "cz --dry-run"
-  },
-  "config": {
-    "commitizen": {
-      "path": "@commitlint/cz-commitlint"
-    }
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck",
+    "fix": "pnpm format && pnpm lint:fix"
   },
   "engines": {
     "node": ">=24.0.0"
@@ -34,12 +29,7 @@
   },
   "packageManager": "pnpm@12.14.0",
   "devDependencies": {
-    "@commitlint/cli": "^21.2.4",
-    "@commitlint/config-conventional": "^21.2.4",
-    "@commitlint/cz-commitlint": "^21.2.4",
-    "commitizen": "^4.3.2",
     "husky": "^9.1.7",
-    "inquirer": "^12.11.1",
     "prettier": "^3.9.10",
     "prettier-plugin-prisma": "^5.0.0",
     "prettier-plugin-tailwindcss": "^0.8.1"

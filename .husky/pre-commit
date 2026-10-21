@@ -1,24 +1,12 @@
 #!/usr/bin/env sh
-# Pre-commit: verifica formato, lint y tipado en todo el monorepo.
-# Si falla, el commit se cancela. Arreglo rápido: pnpm format && pnpm lint:fix
+# Pre-commit: formato, lint y tipado en todo el monorepo.
+# Si falla, el commit se cancela. Arreglo rápido: pnpm fix
 
-pnpm format:check || {
+pnpm check || {
   echo ""
-  echo "✖ Formato incorrecto. Arréglalo con: pnpm format"
-  echo ""
-  exit 1
-}
-
-pnpm lint || {
-  echo ""
-  echo "✖ Errores de lint. Revisa la salida de arriba o ejecuta: pnpm lint:fix"
-  echo ""
-  exit 1
-}
-
-pnpm typecheck || {
-  echo ""
-  echo "✖ Errores de tipado. Ejecuta 'pnpm typecheck' para ver el detalle."
+  echo "✖ Comprobaciones fallidas. Revisa la salida de arriba."
+  echo "  Formato + lint automáticos: pnpm fix"
+  echo "  Comprobación manual:        pnpm check"
   echo ""
   exit 1
 }

@@ -4,11 +4,11 @@ Monorepo para un sistema de autenticación completo: frontend React + Vite + Tai
 
 ## Stack
 
-| Capa       | Tecnología                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------- |
-| `apps/web` | React 19, Vite 8, TypeScript 6, Tailwind CSS 4, React Router, React Hook Form + Zod         |
-| `apps/api` | Express 5, Prisma 7 (PostgreSQL), better-auth, Zod, helmet + rate-limit                     |
-| Tooling    | pnpm workspaces, ESLint 10 (flat config), Prettier 3, Husky 9, commitlint 21 + commitizen 4 |
+| Capa       | Tecnología                                                                          |
+| ---------- | ----------------------------------------------------------------------------------- |
+| `apps/web` | React 19, Vite 8, TypeScript 6, Tailwind CSS 4, React Router, React Hook Form + Zod |
+| `apps/api` | Express 5, Prisma 7 (PostgreSQL), better-auth, Zod, helmet + rate-limit             |
+| Tooling    | pnpm workspaces, ESLint 10 (flat config), Prettier 3, Husky 9                       |
 
 ## Requisitos
 
@@ -53,8 +53,8 @@ pnpm dev
 | `pnpm typecheck`    | TypeScript sin emitir en todas las apps            |
 | `pnpm format`       | Prettier formatea todo el monorepo (raíz + apps)   |
 | `pnpm format:check` | Prettier en modo verificación (lo que usa el hook) |
-| `pnpm commit`       | Asistente interactivo de commits (commitizen)      |
-| `pnpm commit:dry`   | Igual, pero sin crear el commit (simulación)       |
+| `pnpm check`        | Formato + lint + typecheck (lo que usa el hook)    |
+| `pnpm fix`          | Formatea y aplica los fixes automáticos de ESLint  |
 
 Atajos por app: `pnpm --filter web <script>` y `pnpm --filter api <script>`.
 El formato se ejecuta siempre desde la raíz: las apps no tienen scripts `format` propios.
@@ -69,35 +69,34 @@ El formato se ejecuta siempre desde la raíz: las apps no tienen scripts `format
   las mismas reglas y plugins, sin depender de `node_modules` de cada app.
 - **ESLint** en las dos apps con `eslint-config-prettier` al final, así que **no hay reglas de estilo en conflicto**:
   Prettier formatea, ESLint detecta errores.
-- **Husky** ejecuta dos hooks en cada commit:
-  - `.husky/pre-commit` → `format:check` → `lint` → `typecheck`. Arreglo rápido: `pnpm format && pnpm lint:fix`.
-  - `.husky/commit-msg` → valida el mensaje con commitlint (ver abajo).
+- **Husky** ejecuta un hook en cada commit:
+  - `.husky/pre-commit` → `pnpm check` (format:check → lint → typecheck). Arreglo rápido: `pnpm fix`.
 
-Si cualquiera de los dos falla, el commit se cancela.
+Si el hook falla, el commit se cancela.
 
 ## Convención de commits
 
-Se usa **Conventional Commits**, validado automáticamente por `commitlint.config.mjs`:
+Se recomienda seguir **Conventional Commits** con el formato:
 
 ```
-[emoji opcional] <tipo>(<scope opcional>): <descripción>
+<tipo>(<scope opcional>): <descripción>
 ```
 
-| Tipo       | Emoji | Para qué                                    |
-| ---------- | ----- | ------------------------------------------- |
-| `feat`     | ✨    | Nueva funcionalidad                         |
-| `fix`      | 🐛    | Corrección de un bug                        |
-| `docs`     | 📝    | Solo documentación                          |
-| `style`    | 🎨    | Formato, sin cambios de comportamiento      |
-| `refactor` | ♻️    | Reestructura sin cambiar comportamiento     |
-| `perf`     | ⚡️    | Mejora de rendimiento                       |
-| `test`     | ✅    | Tests                                       |
-| `build`    | 📦    | Build, dependencias, tooling de empaquetado |
-| `ci`       | 👷    | Configuración de integración continua       |
-| `chore`    | 🔧    | Tareas varias (deps, config)                |
-| `revert`   | ⏪    | Revertir un commit anterior                 |
+| Tipo       | Para qué                                    |
+| ---------- | ------------------------------------------- |
+| `feat`     | Nueva funcionalidad                         |
+| `fix`      | Corrección de un bug                        |
+| `docs`     | Solo documentación                          |
+| `style`    | Formato, sin cambios de comportamiento      |
+| `refactor` | Reestructura sin cambiar comportamiento     |
+| `perf`     | Mejora de rendimiento                       |
+| `test`     | Tests                                       |
+| `build`    | Build, dependencias, tooling de empaquetado |
+| `ci`       | Configuración de integración continua       |
+| `chore`    | Tareas varias (deps, config)                |
+| `revert`   | Revertir un commit anterior                 |
 
-Scopes permitidos (validados por la regla `scope-enum`): `web`, `api`, `repo`, `deps`.
+Scopes recomendados: `web`, `api`, `repo`, `deps`.
 
 ```bash
 git commit -m "feat(web): añade pantalla de login"
@@ -105,51 +104,11 @@ git commit -m "fix(api): corrige la validación del email"
 git commit -m "chore(repo): actualiza dependencias"
 ```
 
-Los títulos pueden escribirse en español (la regla de mayúsculas está desactivada a propósito).
-Límite de 100 caracteres en la cabecera.
+Los títulos pueden escribirse en español. Se recomienda el modo imperativo, sin punto final y
+un máximo de 100 caracteres en la cabecera.
 
-## Commits interactivos (Commitizen)
-
-Para no memorizar el formato hay un asistente que **usa el mismo `commitlint.config.mjs`** que el validador:
-así lo que escribes nunca puede ser inválido.
-
-```bash
-pnpm commit       # asistente interactivo: escribe el commit por ti
-pnpm commit:dry   # el mismo asistente, sin crear el commit (simulación)
-```
-
-> Necesita algo en staging, igual que `git commit`: `git add <ficheros>` antes de lanzarlo.
-
-Qué hace:
-
-1. Menú de **tipos** con emoji y descripción (lee `type-enum` y `prompt.questions.type.enum`).
-2. Menú de **scopes**: `web`, `api`, `repo`, `deps`. Con **flecha + espacio** eliges varios → `feat(web,api): ...`.
-3. **Descripción** con contador de caracteres (límite 100) y avisos de longitud.
-4. **Cuerpo**, **footer** (`Closes #12`) y si hay **cambios rompientes** (`!` + footer `BREAKING CHANGE:`).
-
-### Emojis
-
-El asistente los escribe en la cabecera (`✨ feat(web): ...`). Funciona porque `parserPreset.headerPattern`
-acepta un emoji **opcional** delante del tipo:
-
-| Mensaje                                              | Resultado                    |
-| ---------------------------------------------------- | ---------------------------- |
-| `✨ feat(web): añade login`                          | ✅ válido                    |
-| `feat(web): añade login` (escrito a mano, sin emoji) | ✅ válido                    |
-| `feat(web,api): multiscope`                          | ✅ válido                    |
-| `✨ chore(repo)!: cambio rompiente`                  | ✅ válido                    |
-| `✨ wip(web): tipo inválido`                         | ❌ `type-enum`               |
-| `feat(movil): scope inválido`                        | ❌ `scope-enum`              |
-| `Merge branch 'main'` / `Revert "..."`               | ⏭️ ignorados automáticamente |
-
-Para **quitar los emojis de la cabecera**: `prompt.questions.type.emojiInHeader: false`
-(siguen viéndose en el menú, pero no se escriben en el commit).
-
-⚠️ Si algún día añades `semantic-release` o generadores de changelog que esperan el tipo en la
-posición 0, desactiva `emojiInHeader` para evitar sorpresas.
-
-Si prefieres no usar el asistente, `git commit -m "..."` funciona igual: el hook `.husky/commit-msg`
-valida el mensaje de todas formas.
+> El formato es una recomendación: no hay validación automática del mensaje de commit. Los hooks
+> solo comprueban formato, lint y tipos del código.
 
 ## TypeScript en `apps/api`
 
@@ -173,8 +132,7 @@ authkit-fullstack/
 │  │  └─ src/
 │  └─ web/            # React + Vite + Tailwind
 │     └─ src/
-├─ .husky/            # hooks de git (pre-commit y commit-msg)
-├─ commitlint.config.mjs # reglas de commit + configuración del asistente
+├─ .husky/            # hook de git (pre-commit)
 ├─ prettier.config.mjs   # config única de Prettier (raíz + apps)
 ├─ .prettierignore       # exclusiones únicas de Prettier
 └─ pnpm-workspace.yaml
