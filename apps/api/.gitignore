@@ -20,7 +20,7 @@ dist
 coverage
 
 # Cliente generado por Prisma
-/generated/prisma
+/src/generated/prisma
 
 # Lockfile local de skills
 skills-lock.json

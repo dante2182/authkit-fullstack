@@ -17,5 +17,9 @@ export default defineConfig([
     languageOptions: {
       globals: globals.node,
     },
+    rules: {
+      // Permite parámetros sin usar que empiezan por _ (ej. el error handler).
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
   },
 ])

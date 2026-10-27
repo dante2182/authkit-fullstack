@@ -1,1 +1,16 @@
-console.log('Hello from /Api')
+import { app } from './app.js'
+import { env } from './config/env.js'
+import { prisma } from './config/prisma.js'
+
+const server = app.listen(env.PORT, () => {
+  console.log(`API escuchando en http://localhost:${env.PORT}`)
+})
+
+// Apagado limpio: cierra HTTP y luego la conexión a Postgres.
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(signal, () => {
+    server.close(() => {
+      void prisma.$disconnect().finally(() => process.exit(0))
+    })
+  })
+}
