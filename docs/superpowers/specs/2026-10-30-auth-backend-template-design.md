@@ -101,7 +101,10 @@ src/
   la adjunta a `req.auth` (augmentación de tipos) y responde 401 con `AppError`.
 - **Errores**: `{ error: { code, message, details? } }`. `AppError` con
   `status`, `code` y `details`. El handler global traduce `ZodError`,
-  `AppError` y desconocidos.
+  `AppError`, errores de cliente de Express y desconocidos. better-auth
+  devuelve sus propios errores (`{ code, message }`) incluso con
+  `asResponse`; `pipeAuthResponse` los convierte en `AppError` para
+  conservar el sobre uniforme.
 - **Validación**: `validate({ body, params, query })` parsea y reemplaza
   `req.body`/`req.params`/`req.query`; los tipos se derivan con `z.infer`.
 - **Usuarios**: lectura y actualización directa con Prisma; `select` explícito
