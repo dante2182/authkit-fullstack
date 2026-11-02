@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Gentle AI generated skill registry
+.atl/
+
+# Local docs and superpowers plans/specs
+docs/
