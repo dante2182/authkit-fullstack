@@ -150,3 +150,6 @@ vite.config.ts.timestamp-*
 
 # Gentle AI generated skill registry
 .atl/
+
+# Local docs and superpowers plans/specs
+docs/
