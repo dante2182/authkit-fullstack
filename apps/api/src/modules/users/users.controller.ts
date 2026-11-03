@@ -1,5 +1,8 @@
+import { fromNodeHeaders } from 'better-auth/node'
 import type { RequestHandler } from 'express'
 import { notFound } from '../../shared/errors/app-error.js'
+import { copySetCookies } from '../../shared/utils/http.js'
+import { authService } from '../auth/auth.service.js'
 import type { UpdateUserInput } from './users.schema.js'
 import { usersService } from './users.service.js'
 
@@ -16,5 +19,11 @@ export const updateMe: RequestHandler = async (req, res) => {
 
 export const deleteMe: RequestHandler = async (req, res) => {
   await usersService.remove(req.auth!.user.id)
+
+  // El usuario y sus sesiones ya no existen (cascade), así que signOut solo
+  // aporta el Set-Cookie que expira la cookie del navegador.
+  const response = await authService.logout(fromNodeHeaders(req.headers))
+  copySetCookies(res, response)
+
   res.status(204).end()
 }
