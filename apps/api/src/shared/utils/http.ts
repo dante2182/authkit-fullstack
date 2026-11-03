@@ -6,6 +6,23 @@ interface AuthErrorBody {
   message?: string
 }
 
+// El token de sesión viaja en la cookie httpOnly: nunca debe exponerse en el body.
+// Solo actúa sobre objetos JSON; ante cualquier otra forma devuelve el texto intacto.
+function stripSessionToken(body: string): string {
+  try {
+    const parsed: unknown = JSON.parse(body)
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return body
+
+    const record = parsed as Record<string, unknown>
+    if (!('token' in record)) return body
+
+    delete record.token
+    return JSON.stringify(record)
+  } catch {
+    return body
+  }
+}
+
 // Reenvía status, headers (incluidas varias set-cookie) y cuerpo de better-auth.
 // Los errores se traducen al formato uniforme de la API.
 export async function pipeAuthResponse(
@@ -31,7 +48,13 @@ export async function pipeAuthResponse(
   const cookies = response.headers.getSetCookie()
   if (cookies.length > 0) res.setHeader('set-cookie', cookies)
 
+  // content-length se omite al copiar headers: Express lo recalcula tras filtrar el body.
   const body = await response.text()
-  if (body.length > 0) res.send(body)
-  else res.end()
+  if (body.length === 0) {
+    res.end()
+    return
+  }
+
+  const isJson = (response.headers.get('content-type') ?? '').includes('application/json')
+  res.send(isJson ? stripSessionToken(body) : body)
 }

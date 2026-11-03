@@ -24,5 +24,8 @@ export const logout: RequestHandler = async (req, res) => {
 
 export const session: RequestHandler = (req, res) => {
   if (!req.auth) throw unauthorized()
-  res.json(req.auth)
+
+  // El token solo vive en la cookie httpOnly; no se repite en el JSON.
+  const { token: _token, ...session } = req.auth.session
+  res.json({ session, user: req.auth.user })
 }

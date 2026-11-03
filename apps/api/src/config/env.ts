@@ -9,6 +9,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.url().default('http://localhost:5173'),
   BETTER_AUTH_SECRET: z.string().min(32, 'Debe tener al menos 32 caracteres'),
   BETTER_AUTH_URL: z.url(),
+  // Minutos entre limpiezas de sesiones expiradas (default: 1 día).
+  SESSION_CLEANUP_INTERVAL_MINUTES: z.coerce.number().int().positive().default(1440),
 })
 
 const parsed = envSchema.safeParse(process.env)
