@@ -26,6 +26,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # El cliente de Prisma se genera en `src/generated` (ignorado por git).
+      - name: Generate Prisma client
+        run: pnpm --filter api db:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/api_auth_test
+
       # PostgreSQL ya viene instalado en el runner: se arranca sin contenedores.
       - name: Start PostgreSQL
         run: |
