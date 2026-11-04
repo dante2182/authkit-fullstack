@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** URL base de la API (apps/api). Definida en .env */
+  /** URL base de la API (apps/api), incluye el prefijo /api. Definida en .env */
   readonly VITE_API_URL: string
 }
 

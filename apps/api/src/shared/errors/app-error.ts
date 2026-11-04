@@ -18,6 +18,9 @@ export const badRequest = (message: string, details?: unknown) =>
 export const unauthorized = (message = 'No autenticado') =>
   new AppError(401, 'UNAUTHORIZED', message)
 
+export const forbidden = (message = 'Acceso prohibido', code = 'FORBIDDEN') =>
+  new AppError(403, code, message)
+
 export const notFound = (message = 'Recurso no encontrado') =>
   new AppError(404, 'NOT_FOUND', message)
 

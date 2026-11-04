@@ -23,13 +23,22 @@ function stripSessionToken(body: string): string {
   }
 }
 
+// Copia solo las cookies de better-auth. Útil en respuestas sin body (204).
+export function copySetCookies(res: Response, response: globalThis.Response): void {
+  const cookies = response.headers.getSetCookie()
+  if (cookies.length > 0) res.setHeader('set-cookie', cookies)
+}
+
 // Reenvía status, headers (incluidas varias set-cookie) y cuerpo de better-auth.
 // Los errores se traducen al formato uniforme de la API.
 export async function pipeAuthResponse(
   res: Response,
   response: globalThis.Response,
 ): Promise<void> {
-  if (!response.ok) {
+  // Las redirecciones (verify-email) se reenvían tal cual, no son errores.
+  const isRedirect = response.status >= 300 && response.status < 400
+
+  if (!response.ok && !isRedirect) {
     const body = (await response.json().catch(() => null)) as AuthErrorBody | null
     throw new AppError(
       response.status,
@@ -45,8 +54,7 @@ export async function pipeAuthResponse(
     res.setHeader(key, value)
   }
 
-  const cookies = response.headers.getSetCookie()
-  if (cookies.length > 0) res.setHeader('set-cookie', cookies)
+  copySetCookies(res, response)
 
   // content-length se omite al copiar headers: Express lo recalcula tras filtrar el body.
   const body = await response.text()
