@@ -1,5 +1,6 @@
 import { auth } from '../../config/auth.js'
 import type {
+  ChangePasswordInput,
   LoginInput,
   RegisterInput,
   RequestPasswordResetInput,
@@ -37,5 +38,24 @@ export const authService = {
 
   verifyEmail(query: { token: string; callbackURL: string }, headers: Headers): Promise<Response> {
     return auth.api.verifyEmail({ query, headers, asResponse: true })
+  },
+
+  // Lista las sesiones activas del usuario autenticado. Incluye el token, así que
+  // el controlador lo elimina antes de responder.
+  listSessions(headers: Headers) {
+    return auth.api.listSessions({ headers })
+  },
+
+  // El token se resuelve en el servidor a partir del id: nunca viaja al cliente.
+  revokeSession(token: string, headers: Headers): Promise<Response> {
+    return auth.api.revokeSession({ body: { token }, headers, asResponse: true })
+  },
+
+  revokeOtherSessions(headers: Headers): Promise<Response> {
+    return auth.api.revokeOtherSessions({ headers, asResponse: true })
+  },
+
+  changePassword(input: ChangePasswordInput, headers: Headers): Promise<Response> {
+    return auth.api.changePassword({ body: input, headers, asResponse: true })
   },
 }

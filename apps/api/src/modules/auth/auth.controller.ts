@@ -1,9 +1,10 @@
 import { fromNodeHeaders } from 'better-auth/node'
 import type { RequestHandler } from 'express'
 import { env } from '../../config/env.js'
-import { badRequest, unauthorized } from '../../shared/errors/app-error.js'
+import { badRequest, notFound, unauthorized } from '../../shared/errors/app-error.js'
 import { pipeAuthResponse } from '../../shared/utils/http.js'
 import type {
+  ChangePasswordInput,
   LoginInput,
   RegisterInput,
   RequestPasswordResetInput,
@@ -103,5 +104,53 @@ export const verifyEmail: RequestHandler = async (req, res) => {
     { token, callbackURL: `${env.CORS_ORIGIN}/verify-email` },
     fromNodeHeaders(req.headers),
   )
+  await pipeAuthResponse(res, response)
+}
+
+// ─── Gestión de sesiones ──────────────────────────────────────────────────────
+// El token de sesión nunca sale en el JSON: solo viaja en la cookie httpOnly.
+
+export const listSessions: RequestHandler = async (req, res) => {
+  const sessions = await authService.listSessions(fromNodeHeaders(req.headers))
+  const currentId = req.auth?.session.id
+
+  res.json({
+    sessions: sessions.map(({ token: _token, ...session }) => ({
+      ...session,
+      current: session.id === currentId,
+    })),
+  })
+}
+
+export const revokeSession: RequestHandler = async (req, res) => {
+  const id = req.params.id
+  if (!id) throw badRequest('Falta el id de la sesión')
+
+  const headers = fromNodeHeaders(req.headers)
+  // Se resuelve el token en el servidor: el cliente solo envía el id.
+  const sessions = await authService.listSessions(headers)
+  const target = sessions.find((session) => session.id === id)
+  if (!target) throw notFound('Sesión no encontrada')
+
+  // Revocar la sesión actual equivale a cerrar sesión: así también se limpia la cookie.
+  if (target.id === req.auth?.session.id) {
+    const response = await authService.logout(headers)
+    await pipeAuthResponse(res, response)
+    return
+  }
+
+  const response = await authService.revokeSession(target.token, headers)
+  await pipeAuthResponse(res, response)
+}
+
+export const revokeOtherSessions: RequestHandler = async (req, res) => {
+  const response = await authService.revokeOtherSessions(fromNodeHeaders(req.headers))
+  await pipeAuthResponse(res, response)
+}
+
+export const changePassword: RequestHandler = async (req, res) => {
+  const input = req.body as ChangePasswordInput
+  const response = await authService.changePassword(input, fromNodeHeaders(req.headers))
+  // pipeAuthResponse reenvía la cookie nueva y elimina el `token` del body.
   await pipeAuthResponse(res, response)
 }

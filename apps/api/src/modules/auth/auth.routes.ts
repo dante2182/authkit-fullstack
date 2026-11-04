@@ -4,6 +4,7 @@ import { validate } from '../../shared/middlewares/validate.js'
 import * as authController from './auth.controller.js'
 import { requireAuth } from './auth.middleware.js'
 import {
+  changePasswordSchema,
   loginSchema,
   registerSchema,
   requestPasswordResetSchema,
@@ -45,3 +46,15 @@ authRouter.post(
   authController.sendVerificationEmail,
 )
 authRouter.get('/verify-email', authController.verifyEmail)
+
+// Gestión de sesiones. El token nunca viaja en el body: solo la cookie httpOnly.
+authRouter.get('/sessions', requireAuth, authController.listSessions)
+authRouter.post('/sessions/revoke-others', requireAuth, authController.revokeOtherSessions)
+authRouter.delete('/sessions/:id', requireAuth, authController.revokeSession)
+authRouter.post(
+  '/change-password',
+  requireAuth,
+  sensitiveIpRateLimit,
+  validate({ body: changePasswordSchema }),
+  authController.changePassword,
+)

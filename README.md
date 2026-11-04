@@ -60,6 +60,10 @@ del prefijo de la API.
 | POST   | `/api/auth/reset-password`          | —      | Cambia la contraseña con el token y revoca todas las sesiones        |
 | POST   | `/api/auth/send-verification-email` | —      | Reenvía el correo de verificación                                    |
 | GET    | `/api/auth/verify-email`            | —      | Valida el token y redirige al frontend (`?error=` si falla)          |
+| GET    | `/api/auth/sessions`                | Cookie | Lista las sesiones activas (sin el token)                            |
+| DELETE | `/api/auth/sessions/:id`            | Cookie | Revoca una sesión propia por id                                      |
+| POST   | `/api/auth/sessions/revoke-others`  | Cookie | Revoca todas las sesiones menos la actual                            |
+| POST   | `/api/auth/change-password`         | Cookie | Cambia la contraseña; opcionalmente revoca las otras sesiones        |
 | GET    | `/api/users/me`                     | Cookie | Usuario actual                                                       |
 | PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                            |
 | DELETE | `/api/users/me`                     | Cookie | Borra la cuenta y expira la cookie                                   |
@@ -106,6 +110,19 @@ ejemplo cambio de email o acciones de negocio sensibles:
 ```ts
 router.post('/orders', requireVerifiedEmail, ordersController.create)
 ```
+
+### Gestión de sesiones
+
+- `GET /api/auth/sessions` devuelve las sesiones activas del usuario. El `token`
+  **nunca** aparece en el JSON: solo viaja en la cookie httpOnly. Cada entrada incluye
+  `current: true` para la sesión que hace la petición.
+- `DELETE /api/auth/sessions/:id` revoca una sesión propia. El servidor resuelve el
+  token a partir del id; un id de otro usuario devuelve `404`. Revocar la sesión actual
+  equivale a cerrar sesión (también limpia la cookie).
+- `POST /api/auth/sessions/revoke-others` revoca el resto y conserva la actual.
+- `POST /api/auth/change-password` recibe `currentPassword`, `newPassword` y el
+  opcional `revokeOtherSessions`. Con `revokeOtherSessions: true` emite una cookie nueva
+  y las anteriores dejan de servir.
 
 ### Rate limit
 
