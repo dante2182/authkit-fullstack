@@ -36,6 +36,25 @@ export const auth = betterAuth({
       sendEmailInBackground(verificationEmail({ to: user.email, name: user.name }, url))
     },
   },
+  user: {
+    additionalFields: {
+      // El rol viaja en `session.user.role` y en `req.auth.user.role`.
+      // `input: false` es obligatorio: sin él, better-auth aceptaría un `role`
+      // enviado en el body de /register y cualquiera podría crearse un ADMIN.
+      role: {
+        type: 'string',
+        required: false,
+        defaultValue: 'USER',
+        input: false,
+      },
+    },
+  },
+  // NO activar session.cookieCache. Con la caché activa, better-auth devuelve
+  // session+user (incluido `role`) desde una cookie firmada y deja de leer la
+  // base en cada petición: un administrador degradado conservaría privilegios
+  // hasta que caduque la caché. Sin cookieCache, getSession llama a
+  // internalAdapter.findSession(token) por request y el rol siempre es fresco
+  // (ver src/modules/admin/admin.test.ts, test de frescura del rol).
   // Joins de Prisma: requiere las relaciones del schema.
   advanced: { database: { joins: true } },
 })

@@ -26,6 +26,16 @@ export const envSchema = z
     TRUST_PROXY: z.string().default('false'),
     // Minutos entre limpiezas de sesiones expiradas (default: 1 día).
     SESSION_CLEANUP_INTERVAL_MINUTES: z.coerce.number().int().positive().default(1440),
+    // Nivel de logs de pino. En test se silencia para no ensuciar la salida.
+    LOG_LEVEL: z
+      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+      .default(process.env.NODE_ENV === 'test' ? 'silent' : 'info'),
+    // Email del usuario que `pnpm admin:bootstrap` promueve a ADMIN.
+    // Vacío en .env equivale a no definido (el script falla con un mensaje claro).
+    ADMIN_EMAIL: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.email().optional(),
+    ),
     // Rate limit estricto de los endpoints sensibles (reset y verificación de
     // email). Activo por defecto salvo en test, donde se activa explícitamente.
     SENSITIVE_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),

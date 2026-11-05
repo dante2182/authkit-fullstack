@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { authRateLimit } from '../config/rate-limit.js'
 import { env } from '../config/env.js'
+import { adminRouter } from '../modules/admin/admin.routes.js'
 import { authRouter } from '../modules/auth/auth.routes.js'
 import { usersRouter } from '../modules/users/users.routes.js'
 import { testOnlyRouter } from './test-only.routes.js'
@@ -13,6 +14,7 @@ router.get('/', (req, res) => {
 
 router.use('/auth', authRateLimit, authRouter)
 router.use('/users', usersRouter)
+router.use('/admin', adminRouter)
 
 // Rutas de apoyo que solo existen en el entorno de test.
 if (env.NODE_ENV === 'test') router.use('/test', testOnlyRouter)

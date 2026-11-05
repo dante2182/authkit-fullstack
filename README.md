@@ -37,6 +37,11 @@ pnpm --filter api db:migrate
 
 # 5. Desarrollo (web + api en paralelo)
 pnpm dev
+
+# 6. Primer administrador (obligatorio en cada proyecto nuevo)
+#    Regístrate primero con POST /api/auth/register, pon ese correo en ADMIN_EMAIL
+#    (apps/api/.env) y ejecuta:
+pnpm --filter api admin:bootstrap
 ```
 
 - Web: http://localhost:5173
@@ -67,6 +72,8 @@ del prefijo de la API.
 | GET    | `/api/users/me`                     | Cookie | Usuario actual                                                       |
 | PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                            |
 | DELETE | `/api/users/me`                     | Cookie | Borra la cuenta y expira la cookie                                   |
+| GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada (ADMIN verificado)                           |
+| PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                       |
 
 `BETTER_AUTH_URL` es el origen sin prefijo (`http://localhost:4000`): better-auth añade
 `/api/auth` con `basePath`.
@@ -124,6 +131,88 @@ router.post('/orders', requireVerifiedEmail, ordersController.create)
   opcional `revokeOtherSessions`. Con `revokeOtherSessions: true` emite una cookie nueva
   y las anteriores dejan de servir.
 
+### Roles y permisos (RBAC)
+
+La plantilla trae un RBAC mínimo y genérico, sin lógica de dominio:
+
+- `Role` es un enum de Prisma con `USER` y `ADMIN`; `User.role` vale `USER` por defecto.
+- `src/shared/auth/permissions.ts` es la **fuente única de verdad**: define los permisos
+  (`PERMISSIONS`), el mapa rol → permisos (`ROLE_PERMISSIONS`) y los helpers
+  `resolveRole`, `hasPermission` y `losesPrivileges`.
+- `requireRole(...roles)` y `requirePermission(permission)` se componen **siempre después**
+  de `requireAuth` y responden `403` con `INSUFFICIENT_ROLE` o `INSUFFICIENT_PERMISSION`.
+  Usados solos responden `401`.
+- Los endpoints de administración encadenan
+  `requireAuth → requireVerifiedEmail → requirePermission(...)`.
+- El rol viaja en `session.user.role` (`additionalFields` de better-auth) con
+  `input: false`: enviar `role` en `/register` o en `PATCH /api/users/me` no tiene efecto.
+- **No actives `session.cookieCache`**: cachea el usuario (incluido `role`) en una cookie
+  firmada y un rol degradado conservaría privilegios hasta que caduque. Sin caché,
+  better-auth lee la sesión de la base en cada petición y el rol siempre es fresco.
+
+#### Endpoints de administración
+
+| Método | Ruta                        | Permiso                    | Qué hace                                                |
+| ------ | --------------------------- | -------------------------- | ------------------------------------------------------- |
+| GET    | `/api/admin/users`          | `admin.users.read`         | Lista paginada (`page`, `limit` máximo 100, default 20) |
+| PATCH  | `/api/admin/users/:id/role` | `admin.users.roles.update` | Cambia el rol de otro usuario                           |
+
+Solo se devuelven campos seguros (`id`, `name`, `email`, `emailVerified`, `role`,
+`createdAt`); nunca datos de `Account`. Reglas del cambio de rol:
+
+- Un admin **no puede cambiar su propio rol**.
+- No se puede dejar el sistema sin ningún `ADMIN` (la comprobación corre en una
+  transacción `Serializable`).
+- Al quitar privilegios se revocan **todas** las sesiones del usuario afectado.
+- El cambio se registra con pino (`admin.role.changed`) con ids y roles, sin datos
+  sensibles.
+
+#### Bootstrap del primer administrador
+
+Paso obligatorio al arrancar un proyecto derivado. No existe endpoint HTTP para esto.
+
+1. Registra el primer usuario con `POST /api/auth/register`.
+2. Pon su correo en `ADMIN_EMAIL` dentro de `apps/api/.env`.
+3. Ejecuta `pnpm --filter api admin:bootstrap`.
+
+Es idempotente: si el usuario ya es `ADMIN` no hace nada, y si el correo no existe
+falla con un mensaje claro pidiendo registrarlo primero.
+
+> El usuario debe tener el **email verificado**: los endpoints `/api/admin/*` exigen
+> `emailVerified`. Sin `RESEND_API_KEY` el correo de verificación no se envía en
+> desarrollo, así que verifícalo por tu cuenta (por ejemplo, marcando `emailVerified`
+> en la base de datos) antes de usar el panel. El script avisa si el email no está
+> verificado.
+
+#### Cómo añadir un rol en un proyecto derivado
+
+Ejemplo: `SUPPORT`.
+
+1. **Enum**: añade el valor al enum `Role` en `apps/api/prisma/schema.prisma`.
+2. **Migración**: `pnpm --filter api db:migrate --name add_support_role` en desarrollo
+   (en producción se aplica con `db:deploy`). La migración solo añade el valor al enum.
+3. **Permisos**: mapea el rol en `ROLE_PERMISSIONS` de
+   `src/shared/auth/permissions.ts` con sus permisos (o `[]` si no tiene).
+   `ROLE_PERMISSIONS` es `Record<Role, ...>`, así que el typecheck falla hasta que lo
+   mapees.
+4. **Rutas**: protege las rutas nuevas con `requireRole(Role.SUPPORT)` o
+   `requirePermission(PERMISSIONS.ALGO)`.
+5. **Tests**: añade un caso con un usuario de ese rol (403 sin él, 200 con él) y actualiza
+   los tests de permisos.
+
+Para añadir un **permiso** nuevo: agrégalo a `PERMISSIONS`, concédelo en
+`ROLE_PERMISSIONS` y úsalo con `requirePermission(PERMISSIONS.NUEVO)`.
+
+#### Extensiones opcionales (no incluidas)
+
+- **Multi-tenant**: el plugin `organization` de better-auth añade organizaciones,
+  miembros y roles por organización; requiere modelos y control de acceso propios.
+- **Permisos por recurso**: además del rol, comprobar que el recurso pertenece al usuario.
+  Esa comprobación vive en el service, no en el middleware.
+- **Auditoría**: tabla append-only de cambios sensibles. Nunca guardes tokens.
+- **Bans e impersonation**: el plugin `admin` de better-auth. Se omitió a propósito para
+  mantener esta plantilla sin lógica de dominio.
+
 ### Rate limit
 
 `/auth` tiene un límite general (100 peticiones/minuto). Los endpoints sensibles
@@ -173,8 +262,9 @@ pnpm --filter api test:watch  # modo watch
   `SENSITIVE_RATE_LIMIT_ENABLED=true`.
 - Cobertura: registro (cookie httpOnly, sin `token` en el body), acceso protegido solo
   con esa cookie, login, logout (con y sin cookie), cookie falsificada, sesión
-  expirada, `GET/PATCH/DELETE /api/users/me`, validaciones de entrada y limpieza de
-  sesiones expiradas.
+  expirada, `GET/PATCH/DELETE /api/users/me`, validaciones de entrada, limpieza de
+  sesiones expiradas, permisos y roles (anti-escalada, paginación, último admin,
+  revocación de sesiones y frescura del rol sin `cookieCache`).
 
 CI: `.github/workflows/ci.yml` ejecuta `format:check`, `lint`, `typecheck` y `test` en
 cada push a `main` y en cada pull request. Arranca el PostgreSQL que ya trae el runner,
