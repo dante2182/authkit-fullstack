@@ -21,5 +21,20 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Las features solo se consumen desde su barril: @/features/<nombre>.
+      // Los imports internos dentro de una feature usan rutas relativas.
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/features/*/*'],
+              message: 'Importa desde el barril de la feature: @/features/<nombre>',
+            },
+          ],
+        },
+      ],
+    },
   },
 ])
