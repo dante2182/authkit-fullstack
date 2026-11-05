@@ -9,6 +9,12 @@ const booleanFlag = (defaultValue: 'true' | 'false') =>
     .default(defaultValue)
     .transform((value) => value === 'true')
 
+// `.env` suele traer variables opcionales como `CLAVE=`. Para Zod eso es un
+// string vacío, no `undefined`, así que `.optional()` no basta. Se normaliza
+// antes de validar: vacío equivale a no definido.
+const emptyToUndefined = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value
+
 // Esquema único: valida y tipa el entorno antes de arrancar.
 export const envSchema = z
   .object({
@@ -32,10 +38,7 @@ export const envSchema = z
       .default(process.env.NODE_ENV === 'test' ? 'silent' : 'info'),
     // Email del usuario que `pnpm admin:bootstrap` promueve a ADMIN.
     // Vacío en .env equivale a no definido (el script falla con un mensaje claro).
-    ADMIN_EMAIL: z.preprocess(
-      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
-      z.email().optional(),
-    ),
+    ADMIN_EMAIL: z.preprocess(emptyToUndefined, z.email().optional()),
     // Rate limit estricto de los endpoints sensibles (reset y verificación de
     // email). Activo por defecto salvo en test, donde se activa explícitamente.
     SENSITIVE_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),
@@ -43,7 +46,7 @@ export const envSchema = z
     SENSITIVE_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
     // Email transaccional con Resend. Sin clave, en desarrollo se imprime el correo
     // en consola en vez de enviarlo; en producción es obligatoria.
-    RESEND_API_KEY: z.string().min(1).optional(),
+    RESEND_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     EMAIL_FROM: z.string().min(1).default('AuthKit <no-reply@authkit.local>'),
   })
   .superRefine((value, ctx) => {

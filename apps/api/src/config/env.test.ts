@@ -21,6 +21,22 @@ describe('envSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('trata RESEND_API_KEY vacía como ausente en desarrollo', () => {
+    const parsed = envSchema.parse({
+      ...productionEnv,
+      NODE_ENV: 'development',
+      RESEND_API_KEY: '',
+    })
+
+    expect(parsed.RESEND_API_KEY).toBeUndefined()
+  })
+
+  it('sigue exigiendo RESEND_API_KEY en producción aunque llegue vacía', () => {
+    const result = envSchema.safeParse({ ...productionEnv, RESEND_API_KEY: '' })
+
+    expect(result.success).toBe(false)
+  })
+
   it('interpreta "false" como false en SENSITIVE_RATE_LIMIT_ENABLED', () => {
     const parsed = envSchema.parse({
       ...productionEnv,
