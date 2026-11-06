@@ -1,8 +1,12 @@
+import { RouterProvider } from 'react-router-dom'
+import { AuthProvider } from '@/features/auth'
+import { router } from './router'
+
 function App() {
   return (
-    <div className="flex h-screen w-screen items-center justify-center text-center text-3xl font-bold">
-      Hello from Web/
-    </div>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   )
 }
 

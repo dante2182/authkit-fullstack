@@ -31,13 +31,56 @@ nueva requiere declararla ahí para tener autocompletado.
 
 ```
 src/
-├─ App.tsx          # componente raíz
-├─ main.tsx         # entry point (createRoot)
-├─ index.css        # @import "tailwindcss"
-└─ vite-env.d.ts    # tipos de import.meta.env
+├─ app/
+│  ├─ App.tsx           # providers + RouterProvider
+│  ├─ router.tsx        # rutas y guards
+│  └─ NotFoundPage.tsx
+├─ features/
+│  ├─ auth/
+│  │  ├─ components/    # layout, campos, guards y botones
+│  │  ├─ context/       # AuthContext
+│  │  ├─ hooks/         # useAuth
+│  │  ├─ lib/           # traducción de errores de autenticación
+│  │  ├─ pages/         # login, registro, recuperación y verificación
+│  │  ├─ providers/     # AuthProvider (restaura la sesión)
+│  │  ├─ services/      # llamadas a la API
+│  │  ├─ types/         # contrato de sesión y usuario
+│  │  └─ index.ts       # API pública de la feature
+│  └─ dashboard/
+│     └─ pages/         # destino protegido de ejemplo
+├─ lib/cn.ts            # helper de clases CSS
+├─ services/http.ts     # cliente HTTP único (cookie httpOnly)
+├─ types/api.ts
+├─ main.tsx             # entry point (createRoot)
+├─ index.css            # @import "tailwindcss"
+└─ vite-env.d.ts        # tipos de import.meta.env
 ```
 
-El **React Compiler** está activado vía `babel-plugin-react-compiler` en `vite.config.ts`.
+Las features solo se importan desde fuera por su barril (`@/features/auth`); dentro usan rutas
+relativas. El **React Compiler** está activado vía `babel-plugin-react-compiler` en `vite.config.ts`.
+
+## Autenticación
+
+El frontend consume estos endpoints de `apps/api`:
+
+| Pantalla               | Endpoint                                                                |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Registro               | `POST /api/auth/register`                                               |
+| Login                  | `POST /api/auth/login`                                                  |
+| Logout                 | `POST /api/auth/logout`                                                 |
+| Restaurar sesión       | `GET /api/auth/session`                                                 |
+| Olvidé mi contraseña   | `POST /api/auth/forgot-password`                                        |
+| Restablecer contraseña | `POST /api/auth/reset-password`                                         |
+| Verificar email        | `GET /api/auth/verify-email` + `POST /api/auth/send-verification-email` |
+
+La sesión vive en una cookie `httpOnly`: el cliente usa `credentials: 'include'` y nunca guarda
+tokens en el navegador.
+
+Rutas del frontend: `/login`, `/register`, `/forgot-password`, `/reset-password?token=…`,
+`/verify-email` y `/dashboard` (protegida). `/` redirige a `/dashboard`.
+
+La API redirige los enlaces de correo a `CORS_ORIGIN/reset-password` y `CORS_ORIGIN/verify-email`,
+así que `CORS_ORIGIN` en `apps/api/.env` debe coincidir con la URL del frontend.
 
 ## Notas de formato y lint
 
