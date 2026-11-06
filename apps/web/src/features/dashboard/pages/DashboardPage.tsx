@@ -2,7 +2,7 @@ import { CheckCircle2, CircleAlert, LayoutDashboard, LogOut, MailCheck, Shield }
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ResendVerificationButton, authErrorMessage, useAuth } from '@/features/auth'
+import { ResendVerificationButton, useAuth } from '@/features/auth'
 
 interface InfoCardProps {
   title: string
@@ -28,23 +28,17 @@ export function DashboardPage() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [isSigningOut, setIsSigningOut] = useState(false)
-  const [signOutError, setSignOutError] = useState<string | null>(null)
 
   if (!user) return null
 
+  // signOut limpia siempre el estado local, aunque falle el servidor.
   async function handleSignOut() {
     setIsSigningOut(true)
-    setSignOutError(null)
 
     try {
       await signOut()
-      navigate('/login', { replace: true })
-    } catch (error) {
-      // Sin respuesta del servidor la cookie sigue viva: se avisa y no se
-      // presenta la sesión como cerrada.
-      setSignOutError(authErrorMessage(error))
     } finally {
-      setIsSigningOut(false)
+      navigate('/login', { replace: true })
     }
   }
 
@@ -79,19 +73,6 @@ export function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6">
-        {signOutError ? (
-          <div
-            role="alert"
-            className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700"
-          >
-            <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <div>
-              <p className="font-medium">No se pudo cerrar la sesión.</p>
-              <p className="mt-0.5 text-red-600">{signOutError}</p>
-            </div>
-          </div>
-        ) : null}
-
         <section>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             Hola, {user.name}

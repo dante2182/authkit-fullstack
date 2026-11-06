@@ -60,18 +60,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // La cookie httpOnly solo la puede invalidar el servidor. Si el logout falla,
-  // el estado local se mantiene: presentar la sesión como cerrada sería mentira
-  // y la cookie seguiría autenticando al recargar.
+  // Logout optimista: el usuario siempre sale de la vista local, aunque el
+  // servidor no responda. El fallo se registra y, si la cookie httpOnly sigue
+  // viva, se invalidará al expirar o en un logout posterior.
   const signOut = useCallback(async () => {
     try {
       await authService.logout()
     } catch (error) {
-      // Una sesión ya expirada tampoco tiene cookie que invalidar.
-      if (!isAnonymousSession(error)) throw error
+      // Un 401 significa que la sesión ya no existía: no hay nada que avisar.
+      if (!isAnonymousSession(error)) {
+        console.warn('No se pudo cerrar la sesión en el servidor', error)
+      }
+    } finally {
+      setUser(null)
     }
-
-    setUser(null)
   }, [])
 
   return (

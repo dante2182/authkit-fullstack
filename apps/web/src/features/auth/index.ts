@@ -19,8 +19,5 @@ export { VerifyEmailPage } from './pages/VerifyEmailPage'
 // Componentes que otras features pueden reutilizar
 export { ResendVerificationButton } from './components/ResendVerificationButton'
 
-// Traducción de errores de la API a mensajes para el usuario
-export { authErrorMessage } from './lib/auth-errors'
-
 // Tipos del contrato
 export type { AuthSession, AuthUser, SessionResponse, UserRole } from './types'

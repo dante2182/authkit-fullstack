@@ -6,7 +6,7 @@ export interface AuthContextValue {
   isLoading: boolean
   // Devuelve el usuario restaurado, o null si no hay sesión válida.
   refreshSession: () => Promise<AuthUser | null>
-  // Lanza si el servidor no pudo cerrar la sesión: la cookie seguiría viva.
+  // Limpia siempre la sesión local; el fallo del servidor solo se registra.
   signOut: () => Promise<void>
 }
 
