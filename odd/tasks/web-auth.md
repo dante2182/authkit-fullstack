@@ -87,3 +87,15 @@ ahora analizando el proyecto pasemos al apartado web, vamos iniciar con la inter
 - `refreshSession` devuelve `AuthUser | null`. Login y registro comprueban el valor: si no hay sesión confirmada, muestran un mensaje en vez de navegar a `/dashboard` y rebotar al login sin explicación.
 - `authErrorMessage` se exporta desde el barril de la feature para que el dashboard traduzca el fallo de logout.
 - Verificación: `format:check`, `lint`, `typecheck` y `build` web en verde. Sin tests ejecutables en `apps/web`: excepción declarada del policy test-first.
+
+### L7 — Revisión de la unidad ya commiteada
+
+- Commit `0252fda`, assess `high` sobre `HEAD~1..HEAD`; consentimiento **granted**.
+- Candidato `sha256:1017769b…10b3`, lineage `review-d73ab2f5846d6b3e`, 4 lentes, refuter requerido y ejecutado.
+- Resultado: **approved**; el único BLOCKER (`R3-missing-web-tests`) quedó **refuted** por el refuter. Authority `burned` en `sha256:5b966f77…b183`.
+- Resto de hallazgos, informativos:
+  - `R4-SIGNOUT-DEADEND`: con la corrección de L6, un fallo persistente de logout deja al usuario sin forma de cerrar sesión desde la UI (los guards lo devuelven al dashboard). Es el precio de no mentir sobre la sesión; falta una salida explícita tipo "cerrar solo en este dispositivo".
+  - `R3-login-redirect-truncates-state`: el redirect conserva solo `pathname`; se pierden query y hash del destino original.
+  - `R1-001`: el token de reset queda en la URL tras el éxito; conviene limpiar la entrada de historial.
+  - Restauración inicial sin reintento ni aviso; `isLoading` sin timeout; sin error boundary en el router.
+  - Duplicaciones: `PasswordField`/`TextField`, política de contraseña, CTA y alerta del dashboard.
