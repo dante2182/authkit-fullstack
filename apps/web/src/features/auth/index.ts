@@ -17,6 +17,8 @@ export { ResetPasswordPage } from './pages/ResetPasswordPage'
 export { VerifyEmailPage } from './pages/VerifyEmailPage'
 
 // Componentes que otras features pueden reutilizar
+export { Alert } from './components/Alert'
+export { FullPageLoader } from './components/FullPageLoader'
 export { ResendVerificationButton } from './components/ResendVerificationButton'
 
 // Tipos del contrato

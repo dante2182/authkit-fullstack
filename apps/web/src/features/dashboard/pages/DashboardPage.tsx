@@ -54,6 +54,17 @@ export function DashboardPage() {
           </Link>
 
           <div className="flex items-center gap-3">
+            {user.role === 'ADMIN' ? (
+              <Link
+                to="/admin/users"
+                aria-label="Usuarios"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none"
+              >
+                <Shield className="size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Usuarios</span>
+              </Link>
+            ) : null}
+
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-slate-900">{user.name}</p>
               <p className="text-xs text-slate-500">{user.email}</p>
