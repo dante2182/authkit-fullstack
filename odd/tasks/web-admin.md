@@ -61,4 +61,4 @@ entonces vamos primero por faces, creando primero tambien una nueva rama, primer
 - Archivos nuevos: `features/admin/{types,lib,services,components,pages}` y barril; `app/router.tsx` (ruta `/admin/users`); `features/auth/index.ts` (exporta `Alert` y `FullPageLoader`); `features/dashboard/pages/DashboardPage.tsx` (enlace visible solo para ADMIN); `apps/web/README.md`.
 - Sin tests ejecutables en `apps/web` (runner no configurado, fase posterior): la UI admin no tiene cobertura automática. Risk: item 6.
 - No se probó contra la API en local (la base `authkit` sigue con migraciones pendientes); el contrato usado está cubierto por los tests de la API y por lectura directa de `admin.routes/controller/service/schema`.
-- Commit de la fase: `b3a19d7` (17 archivos, 720 líneas). Supera la heurística de ~400 líneas porque es una feature nueva completa; partirla por componentes dejaría commits sin comportamiento verificable.
+- Commit de la fase: `1395cf0` (17 archivos, 720 líneas). Supera la heurística de ~400 líneas porque es una feature nueva completa; partirla por componentes dejaría commits sin comportamiento verificable.
