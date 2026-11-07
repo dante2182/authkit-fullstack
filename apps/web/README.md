@@ -53,8 +53,17 @@ src/
 │  │  ├─ services/      # llamadas a /api/admin
 │  │  ├─ types/         # contrato del módulo admin
 │  │  └─ index.ts       # API pública de la feature
+│  ├─ account/
+│  │  ├─ components/    # perfil, contraseña y lista de sesiones
+│  │  ├─ lib/           # descripción de user-agent y fechas
+│  │  ├─ pages/         # página /account
+│  │  ├─ services/      # llamadas a /api/users/me y /api/auth
+│  │  ├─ types/         # contrato de cuenta y sesiones
+│  │  └─ index.ts       # API pública de la feature
 │  └─ dashboard/
 │     └─ pages/         # destino protegido de ejemplo
+├─ components/
+│  └─ AppHeader.tsx     # cabecera compartida de páginas privadas
 ├─ lib/cn.ts            # helper de clases CSS
 ├─ services/http.ts     # cliente HTTP único (cookie httpOnly)
 ├─ types/api.ts
@@ -88,7 +97,26 @@ La sesión vive en una cookie `httpOnly`: el cliente usa `credentials: 'include'
 tokens en el navegador.
 
 Rutas del frontend: `/login`, `/register`, `/forgot-password`, `/reset-password?token=…`,
-`/verify-email`, `/dashboard` y `/admin/users` (protegidas). `/` redirige a `/dashboard`.
+`/verify-email`, `/dashboard`, `/account` y `/admin/users` (protegidas). `/` redirige a
+`/dashboard`.
+
+## Cuenta
+
+`/account` consume los endpoints de perfil y sesiones:
+
+| Pantalla           | Endpoint                               |
+| ------------------ | -------------------------------------- |
+| Editar perfil      | `PATCH /api/users/me`                  |
+| Cambiar contraseña | `POST /api/auth/change-password`       |
+| Listar sesiones    | `GET /api/auth/list-sessions`          |
+| Sesión actual      | `GET /api/auth/get-session`            |
+| Revocar una sesión | `POST /api/auth/revoke-session`        |
+| Revocar las demás  | `POST /api/auth/revoke-other-sessions` |
+
+La sesión actual se identifica comparando el `token` de `list-sessions` con el de
+`get-session`; el token no se guarda en el navegador. La sesión actual no se revoca
+desde la lista: para eso está el logout. Al cambiar la contraseña con
+`revokeOtherSessions`, la API emite una cookie nueva y la UI relee la sesión.
 
 ## Administración
 

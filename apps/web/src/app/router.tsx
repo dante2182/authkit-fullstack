@@ -9,6 +9,7 @@ import {
   ResetPasswordPage,
   VerifyEmailPage,
 } from '@/features/auth'
+import { AccountPage } from '@/features/account'
 import { AdminRoute, AdminUsersPage } from '@/features/admin'
 import { DashboardPage } from '@/features/dashboard'
 import { NotFoundPage } from './NotFoundPage'
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
+      { path: '/account', element: <AccountPage /> },
       {
         // Solo ADMIN con email verificado: la API aplica el mismo criterio.
         element: <AdminRoute />,

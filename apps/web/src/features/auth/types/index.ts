@@ -16,6 +16,8 @@ export interface AuthUser {
 
 export interface AuthSession {
   id: string
+  // Token opaco de better-auth: solo se usa para comparar sesiones en la UI.
+  token: string
   userId: string
   expiresAt: string
   createdAt: string
