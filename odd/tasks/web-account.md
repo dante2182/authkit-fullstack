@@ -62,3 +62,4 @@ Sí, arranca la Fase 2 (perfil, cambio de contraseña y gestión de sesiones) co
 - Avisos aplicados: tipo de respuesta de `change-password` corregido a `{ token, user }`; comentario de `AppHeader` ajustado; revocaciones revalidadas contra el servidor.
 - Avisos pendientes (no bloquean): `apps/web` sigue sin runner de tests; `AdminUsersPage` mantiene su propia cabecera (no usa `AppHeader`).
 - Sin prueba contra la API en local (base `authkit` con migraciones pendientes); contratos verificados contra el código instalado de better-auth y los tests de la API.
+- Commit de la fase: `e66ecc0` (17 archivos, 783 líneas). Incluye un refactor pequeño del header del dashboard a `src/components/AppHeader.tsx` para compartirlo con la cuenta.
