@@ -8,11 +8,12 @@ export class ApiError extends Error {
   readonly details: unknown
 
   constructor(status: number, body: ApiErrorBody | null) {
-    super(body?.error.message ?? 'Error de red')
+    const nested = body?.error
+    super(nested?.message ?? body?.message ?? 'Error de red')
     this.name = 'ApiError'
     this.status = status
-    this.code = body?.error.code ?? 'NETWORK_ERROR'
-    this.details = body?.error.details
+    this.code = nested?.code ?? body?.code ?? 'NETWORK_ERROR'
+    this.details = nested?.details
   }
 }
 

@@ -1,4 +1,4 @@
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
+import rateLimit from 'express-rate-limit'
 import { env } from './env.js'
 
 const rateLimitMessage = {
@@ -28,13 +28,3 @@ const sensitiveOptions = {
 }
 
 export const sensitiveIpRateLimit = rateLimit(sensitiveOptions)
-
-// Segundo cubo por email: frena el abuso dirigido a una misma víctima desde
-// varias IPs. Sin email en el cuerpo (p. ej. reset-password) actúa solo el de IP.
-export const sensitiveEmailRateLimit = rateLimit({
-  ...sensitiveOptions,
-  keyGenerator: (req) => {
-    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : ''
-    return email || ipKeyGenerator(req.ip ?? '')
-  },
-})

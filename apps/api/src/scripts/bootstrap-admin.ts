@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   if (!user) {
     console.error(
       `No existe ningún usuario con el email "${email}". ` +
-        'Regístralo primero con POST /api/auth/register y vuelve a ejecutar el script.',
+        'Regístralo primero con POST /api/auth/sign-up/email y vuelve a ejecutar el script.',
     )
     process.exitCode = 1
     return

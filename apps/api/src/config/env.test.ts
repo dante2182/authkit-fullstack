@@ -46,4 +46,36 @@ describe('envSchema', () => {
 
     expect(parsed.SENSITIVE_RATE_LIMIT_ENABLED).toBe(false)
   })
+
+  it('acepta un proveedor social solo con la pareja completa', () => {
+    const parsed = envSchema.parse({
+      ...productionEnv,
+      NODE_ENV: 'development',
+      GOOGLE_CLIENT_ID: 'google-id',
+      GOOGLE_CLIENT_SECRET: 'google-secret',
+    })
+
+    expect(parsed.GOOGLE_CLIENT_ID).toBe('google-id')
+  })
+
+  it('rechaza media pareja de credenciales sociales', () => {
+    const result = envSchema.safeParse({
+      ...productionEnv,
+      NODE_ENV: 'development',
+      GITHUB_CLIENT_ID: 'github-id',
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('trata las credenciales sociales vacías como ausentes', () => {
+    const parsed = envSchema.parse({
+      ...productionEnv,
+      NODE_ENV: 'development',
+      GITHUB_CLIENT_ID: '',
+      GITHUB_CLIENT_SECRET: '',
+    })
+
+    expect(parsed.GITHUB_CLIENT_ID).toBeUndefined()
+  })
 })

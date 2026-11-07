@@ -34,7 +34,7 @@ beforeEach(async () => {
 
 describe('registro con verificación de email', () => {
   it('envía el correo de verificación sin bloquear el login', async () => {
-    const response = await request(app).post('/api/auth/register').send(credentials)
+    const response = await request(app).post('/api/auth/sign-up/email').send(credentials)
 
     expect(response.status).toBe(200)
     expect(response.headers['set-cookie']).toBeDefined()
@@ -48,7 +48,7 @@ describe('registro con verificación de email', () => {
   })
 
   it('marca el email como verificado al abrir el enlace', async () => {
-    await request(app).post('/api/auth/register').send(credentials)
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
     const token = new URL(lastEmailUrl()).searchParams.get('token')
     expect(token).toBeTruthy()
 
@@ -64,7 +64,7 @@ describe('registro con verificación de email', () => {
   })
 
   it('permite reenviar el correo de verificación', async () => {
-    await request(app).post('/api/auth/register').send(credentials)
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
     send.mockClear()
 
     const response = await request(app)
@@ -90,7 +90,7 @@ describe('registro con verificación de email', () => {
   })
 
   it('ignora un callbackURL manipulado: redirige siempre a CORS_ORIGIN', async () => {
-    await request(app).post('/api/auth/register').send(credentials)
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
     const token = new URL(lastEmailUrl()).searchParams.get('token')
 
     const response = await request(app)
@@ -102,8 +102,8 @@ describe('registro con verificación de email', () => {
     expect(response.headers.location).not.toContain('evil.example')
   })
 
-  it('ignora callbackURL en el cuerpo al reenviar la verificación', async () => {
-    await request(app).post('/api/auth/register').send(credentials)
+  it('el enlace de reenvío apunta al endpoint nativo de verificación', async () => {
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
     send.mockClear()
 
     const response = await request(app)
@@ -111,14 +111,24 @@ describe('registro con verificación de email', () => {
       .send({ email: credentials.email, callbackURL: 'https://evil.example/phishing' })
 
     expect(response.status).toBe(200)
-    expect(lastEmailUrl()).not.toContain('evil.example')
-    expect(lastEmailUrl()).toContain('callbackURL=http%3A%2F%2Flocalhost%3A5173%2Fverify-email')
+    // El callbackURL del correo se ignora al abrir el enlace: app.ts lo reescribe
+    // al origen configurado antes de llegar al handler nativo.
+    const emailUrl = new URL(lastEmailUrl())
+    const token = emailUrl.searchParams.get('token')
+    expect(token).toBeTruthy()
+
+    const opened = await request(app)
+      .get('/api/auth/verify-email')
+      .query({ token, callbackURL: 'https://evil.example/phishing' })
+
+    expect(opened.status).toBe(302)
+    expect(opened.headers.location).toBe('http://localhost:5173/verify-email')
   })
 
   it('no rompe el registro si el envío del correo falla', async () => {
     send.mockRejectedValueOnce(new Error('Resend caído'))
 
-    const response = await request(app).post('/api/auth/register').send(credentials)
+    const response = await request(app).post('/api/auth/sign-up/email').send(credentials)
 
     expect(response.status).toBe(200)
     expect(response.headers['set-cookie']).toBeDefined()

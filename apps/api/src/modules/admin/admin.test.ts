@@ -29,7 +29,9 @@ function sessionCookie(response: request.Response): string {
 }
 
 async function registerUser(email: string, name = 'Test User'): Promise<TestUser> {
-  const response = await request(app).post('/api/auth/register').send({ name, email, password })
+  const response = await request(app)
+    .post('/api/auth/sign-up/email')
+    .send({ name, email, password })
   expect(response.status).toBe(200)
 
   const user = await prisma.user.findUniqueOrThrow({ where: { email }, select: { id: true } })
@@ -262,7 +264,7 @@ describe('PATCH /api/admin/users/:id/role', () => {
 describe('anti-escalada de rol', () => {
   it('ignora un role enviado en /register', async () => {
     const response = await request(app)
-      .post('/api/auth/register')
+      .post('/api/auth/sign-up/email')
       .send({ name: 'Attacker', email: 'attacker@example.com', password, role: 'ADMIN' })
 
     expect(response.status).toBe(200)
@@ -273,7 +275,7 @@ describe('anti-escalada de rol', () => {
     expect(stored.role).toBe(Role.USER)
 
     const session = await request(app)
-      .get('/api/auth/session')
+      .get('/api/auth/get-session')
       .set('Cookie', sessionCookie(response))
 
     expect(session.status).toBe(200)

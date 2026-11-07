@@ -28,31 +28,31 @@ beforeEach(async () => {
   await resetDatabase()
 })
 
-describe('POST /api/auth/register', () => {
-  it('devuelve una cookie httpOnly y no expone el token en el body', async () => {
-    const response = await request(app).post('/api/auth/register').send(credentials)
+describe('POST /api/auth/sign-up/email', () => {
+  it('devuelve una cookie httpOnly y el usuario creado', async () => {
+    const response = await request(app).post('/api/auth/sign-up/email').send(credentials)
 
     expect(response.status).toBe(200)
     const cookies = getCookies(response)
     expect(cookies.some((cookie) => cookie.startsWith('better-auth.session_token='))).toBe(true)
     expect(cookies.some((cookie) => /HttpOnly/i.test(cookie))).toBe(true)
-    expect(JSON.stringify(response.body)).not.toContain('"token"')
+    expect(response.body.user.email).toBe(credentials.email)
   })
 
-  it('rechaza datos inválidos con 422', async () => {
+  it('rechaza datos inválidos con 400', async () => {
     const response = await request(app)
-      .post('/api/auth/register')
+      .post('/api/auth/sign-up/email')
       .send({ ...credentials, email: 'no-es-un-email', password: '123' })
 
-    expect(response.status).toBe(422)
-    expect(response.body.error.code).toBe('VALIDATION_ERROR')
+    expect(response.status).toBe(400)
+    expect(response.body.code).toBe('VALIDATION_ERROR')
   })
 
   it('rechaza un email duplicado sin crear otro usuario ni otra sesión', async () => {
-    const first = await request(app).post('/api/auth/register').send(credentials)
+    const first = await request(app).post('/api/auth/sign-up/email').send(credentials)
     expect(first.status).toBe(200)
 
-    const second = await request(app).post('/api/auth/register').send(credentials)
+    const second = await request(app).post('/api/auth/sign-up/email').send(credentials)
 
     expect(second.status).toBe(422)
     expect(second.headers['set-cookie']).toBeUndefined()
@@ -63,7 +63,7 @@ describe('POST /api/auth/register', () => {
 
 describe('acceso a rutas protegidas', () => {
   it('solo funciona con la cookie emitida en el registro', async () => {
-    const register = await request(app).post('/api/auth/register').send(credentials)
+    const register = await request(app).post('/api/auth/sign-up/email').send(credentials)
     const cookie = sessionCookie(register)
 
     const withoutCookie = await request(app).get('/api/users/me')
@@ -83,7 +83,7 @@ describe('acceso a rutas protegidas', () => {
   })
 
   it('rechaza una sesión expirada', async () => {
-    const register = await request(app).post('/api/auth/register').send(credentials)
+    const register = await request(app).post('/api/auth/sign-up/email').send(credentials)
     const cookie = sessionCookie(register)
 
     await prisma.session.updateMany({ data: { expiresAt: new Date(Date.now() - 60_000) } })
@@ -93,42 +93,45 @@ describe('acceso a rutas protegidas', () => {
   })
 })
 
-describe('POST /api/auth/login', () => {
+describe('POST /api/auth/sign-in/email', () => {
   it('inicia sesión y emite cookie', async () => {
-    await request(app).post('/api/auth/register').send(credentials)
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
 
     const response = await request(app)
-      .post('/api/auth/login')
+      .post('/api/auth/sign-in/email')
       .send({ email: credentials.email, password: credentials.password })
 
     expect(response.status).toBe(200)
     expect(sessionCookie(response)).toContain('better-auth.session_token=')
-    expect(JSON.stringify(response.body)).not.toContain('"token"')
+    expect(response.body.user.email).toBe(credentials.email)
   })
 
   it('rechaza una contraseña incorrecta', async () => {
-    await request(app).post('/api/auth/register').send(credentials)
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
 
     const response = await request(app)
-      .post('/api/auth/login')
+      .post('/api/auth/sign-in/email')
       .send({ email: credentials.email, password: 'WrongPassword123!' })
 
     expect(response.status).toBe(401)
+    expect(response.body.code).toBe('INVALID_EMAIL_OR_PASSWORD')
   })
 
-  it('rechaza datos inválidos con 422', async () => {
-    const response = await request(app).post('/api/auth/login').send({ email: 'no-es-un-email' })
+  it('rechaza datos inválidos con 400', async () => {
+    const response = await request(app)
+      .post('/api/auth/sign-in/email')
+      .send({ email: 'no-es-un-email' })
 
-    expect(response.status).toBe(422)
+    expect(response.status).toBe(400)
   })
 })
 
-describe('POST /api/auth/logout', () => {
+describe('POST /api/auth/sign-out', () => {
   it('expira la cookie y la sesión deja de servir', async () => {
-    const register = await request(app).post('/api/auth/register').send(credentials)
+    const register = await request(app).post('/api/auth/sign-up/email').send(credentials)
     const cookie = sessionCookie(register)
 
-    const logout = await request(app).post('/api/auth/logout').set('Cookie', cookie)
+    const logout = await request(app).post('/api/auth/sign-out').set('Cookie', cookie)
 
     expect(logout.status).toBe(200)
     expect(getCookies(logout).some((entry) => /Max-Age=0/i.test(entry))).toBe(true)
@@ -139,7 +142,7 @@ describe('POST /api/auth/logout', () => {
   })
 
   it('funciona sin cookie (sesión ya expirada) y expira la cookie igualmente', async () => {
-    const logout = await request(app).post('/api/auth/logout')
+    const logout = await request(app).post('/api/auth/sign-out')
 
     expect(logout.status).toBe(200)
     expect(getCookies(logout).some((entry) => /Max-Age=0/i.test(entry))).toBe(true)
