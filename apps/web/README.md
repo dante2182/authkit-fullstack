@@ -65,13 +65,17 @@ El frontend consume estos endpoints de `apps/api`:
 
 | Pantalla               | Endpoint                                                                |
 | ---------------------- | ----------------------------------------------------------------------- |
-| Registro               | `POST /api/auth/register`                                               |
-| Login                  | `POST /api/auth/login`                                                  |
-| Logout                 | `POST /api/auth/logout`                                                 |
-| Restaurar sesión       | `GET /api/auth/session`                                                 |
-| Olvidé mi contraseña   | `POST /api/auth/forgot-password`                                        |
+| Registro               | `POST /api/auth/sign-up/email`                                          |
+| Login                  | `POST /api/auth/sign-in/email`                                          |
+| Login social           | `POST /api/auth/sign-in/social` + `GET /api/auth/callback/:provider`    |
+| Logout                 | `POST /api/auth/sign-out`                                               |
+| Restaurar sesión       | `GET /api/auth/get-session`                                             |
+| Olvidé mi contraseña   | `POST /api/auth/request-password-reset`                                 |
 | Restablecer contraseña | `POST /api/auth/reset-password`                                         |
 | Verificar email        | `GET /api/auth/verify-email` + `POST /api/auth/send-verification-email` |
+
+Los endpoints son los nativos de better-auth. `GET /api/auth/get-session` responde `200`
+con `null` cuando no hay sesión.
 
 La sesión vive en una cookie `httpOnly`: el cliente usa `credentials: 'include'` y nunca guarda
 tokens en el navegador.

@@ -5,6 +5,18 @@ import { passwordResetEmail, verificationEmail } from '../shared/email/templates
 import { env } from './env.js'
 import { prisma } from './prisma.js'
 
+// Solo se declara el proveedor cuando existe la pareja completa de credenciales.
+// Así el backend arranca sin OAuth en desarrollo y lo habilita al rellenar el .env.
+const google =
+  env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+    ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }
+    : null
+
+const github =
+  env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
+    ? { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET }
+    : null
+
 // better-auth espera a que el callback termine, así que aquí NO se hace await del
 // envío: el correo sale en segundo plano y un fallo de Resend se registra sin
 // romper la petición del usuario.
@@ -31,10 +43,17 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
-    // Se envía desde el controlador de registro para fijar el callback del frontend.
+    // El endpoint nativo POST /api/auth/sign-up/email envía el correo solo si
+    // esta opción está activa. El registro no queda bloqueado: la verificación
+    // es opcional para iniciar sesión.
+    sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url }) => {
       sendEmailInBackground(verificationEmail({ to: user.email, name: user.name }, url))
     },
+  },
+  socialProviders: {
+    ...(google ? { google } : {}),
+    ...(github ? { github } : {}),
   },
   user: {
     additionalFields: {

@@ -15,10 +15,9 @@ const otherCredentials = {
   password: 'OtherSecret123!',
 }
 
-interface SessionView {
+interface NativeSession {
   id: string
-  token?: string
-  current: boolean
+  token: string
 }
 
 function sessionCookie(response: request.Response): string {
@@ -30,70 +29,70 @@ function sessionCookie(response: request.Response): string {
 }
 
 async function register(user = credentials): Promise<string> {
-  const response = await request(app).post('/api/auth/register').send(user)
+  const response = await request(app).post('/api/auth/sign-up/email').send(user)
   expect(response.status).toBe(200)
   return sessionCookie(response)
 }
 
 async function login(user = credentials): Promise<string> {
   const response = await request(app)
-    .post('/api/auth/login')
+    .post('/api/auth/sign-in/email')
     .send({ email: user.email, password: user.password })
   expect(response.status).toBe(200)
   return sessionCookie(response)
 }
 
-async function listSessions(cookie: string): Promise<SessionView[]> {
-  const response = await request(app).get('/api/auth/sessions').set('Cookie', cookie)
+async function listSessions(cookie: string): Promise<NativeSession[]> {
+  const response = await request(app).get('/api/auth/list-sessions').set('Cookie', cookie)
   expect(response.status).toBe(200)
-  return response.body.sessions as SessionView[]
+  return response.body as NativeSession[]
+}
+
+async function currentToken(cookie: string): Promise<string> {
+  const response = await request(app).get('/api/auth/get-session').set('Cookie', cookie)
+  expect(response.status).toBe(200)
+  return response.body.session.token as string
 }
 
 beforeEach(async () => {
   await resetDatabase()
 })
 
-describe('GET /api/auth/sessions', () => {
-  it('lista las sesiones activas sin exponer el token', async () => {
+describe('GET /api/auth/list-sessions', () => {
+  it('lista las sesiones activas', async () => {
     const cookie = await register()
     await login()
 
-    const response = await request(app).get('/api/auth/sessions').set('Cookie', cookie)
+    const sessions = await listSessions(cookie)
 
-    expect(response.status).toBe(200)
-    expect(response.body.sessions).toHaveLength(2)
-    expect(JSON.stringify(response.body)).not.toContain('"token"')
-
-    const sessions = response.body.sessions as SessionView[]
-    expect(sessions.filter((session) => session.current)).toHaveLength(1)
+    expect(sessions).toHaveLength(2)
   })
 
   it('devuelve 401 sin sesión', async () => {
-    const response = await request(app).get('/api/auth/sessions')
+    const response = await request(app).get('/api/auth/list-sessions')
     expect(response.status).toBe(401)
   })
 })
 
-describe('DELETE /api/auth/sessions/:id', () => {
+describe('POST /api/auth/revoke-session', () => {
   it('revoca otra sesión del mismo usuario y deja viva la actual', async () => {
     const currentCookie = await register()
     const otherCookie = await login()
 
     const sessions = await listSessions(currentCookie)
-    const other = sessions.find((session) => !session.current)
+    const otherToken = await currentToken(otherCookie)
+    const other = sessions.find((session) => session.token === otherToken)
     if (!other) throw new Error('No hay otra sesión que revocar')
 
     const response = await request(app)
-      .delete(`/api/auth/sessions/${other.id}`)
+      .post('/api/auth/revoke-session')
       .set('Cookie', currentCookie)
+      .send({ token: other.token })
 
     expect(response.status).toBe(200)
 
-    const revoked = await request(app).get('/api/users/me').set('Cookie', otherCookie)
-    expect(revoked.status).toBe(401)
-
-    const stillValid = await request(app).get('/api/users/me').set('Cookie', currentCookie)
-    expect(stillValid.status).toBe(200)
+    expect((await request(app).get('/api/users/me').set('Cookie', otherCookie)).status).toBe(401)
+    expect((await request(app).get('/api/users/me').set('Cookie', currentCookie)).status).toBe(200)
   })
 
   it('no permite revocar la sesión de otro usuario', async () => {
@@ -105,38 +104,36 @@ describe('DELETE /api/auth/sessions/:id', () => {
     if (!victimSession) throw new Error('La víctima no tiene sesión')
 
     const response = await request(app)
-      .delete(`/api/auth/sessions/${victimSession.id}`)
+      .post('/api/auth/revoke-session')
       .set('Cookie', attackerCookie)
+      .send({ token: victimSession.token })
 
-    expect(response.status).toBe(404)
-
-    const stillValid = await request(app).get('/api/users/me').set('Cookie', victimCookie)
-    expect(stillValid.status).toBe(200)
+    // better-auth responde 200 genérico y no borra una sesión ajena.
+    expect(response.status).toBe(200)
+    expect((await request(app).get('/api/users/me').set('Cookie', victimCookie)).status).toBe(200)
   })
 
-  it('revocar la sesión actual equivale a cerrar sesión', async () => {
+  it('revocar la sesión actual invalida la cookie', async () => {
     const cookie = await register()
-    const [current] = await listSessions(cookie)
-    if (!current) throw new Error('No hay sesión actual')
+    const token = await currentToken(cookie)
 
     const response = await request(app)
-      .delete(`/api/auth/sessions/${current.id}`)
+      .post('/api/auth/revoke-session')
       .set('Cookie', cookie)
+      .send({ token })
 
     expect(response.status).toBe(200)
-
-    const after = await request(app).get('/api/users/me').set('Cookie', cookie)
-    expect(after.status).toBe(401)
+    expect((await request(app).get('/api/users/me').set('Cookie', cookie)).status).toBe(401)
   })
 })
 
-describe('POST /api/auth/sessions/revoke-others', () => {
+describe('POST /api/auth/revoke-other-sessions', () => {
   it('revoca el resto de sesiones y conserva la actual', async () => {
     const currentCookie = await register()
     const otherCookie = await login()
 
     const response = await request(app)
-      .post('/api/auth/sessions/revoke-others')
+      .post('/api/auth/revoke-other-sessions')
       .set('Cookie', currentCookie)
 
     expect(response.status).toBe(200)
@@ -158,10 +155,10 @@ describe('POST /api/auth/change-password', () => {
       .send({ currentPassword: 'WrongPassword123!', newPassword })
 
     expect(response.status).toBe(400)
-    expect(response.body.error.code).toBe('INVALID_PASSWORD')
+    expect(response.body.code).toBe('INVALID_PASSWORD')
   })
 
-  it('cambia la contraseña sin revocar la sesión y sin exponer el token', async () => {
+  it('cambia la contraseña sin revocar la sesión actual', async () => {
     const cookie = await register()
 
     const response = await request(app)
@@ -170,15 +167,14 @@ describe('POST /api/auth/change-password', () => {
       .send({ currentPassword: credentials.password, newPassword })
 
     expect(response.status).toBe(200)
-    expect(JSON.stringify(response.body)).not.toContain('"token"')
 
     const oldLogin = await request(app)
-      .post('/api/auth/login')
+      .post('/api/auth/sign-in/email')
       .send({ email: credentials.email, password: credentials.password })
     expect(oldLogin.status).toBe(401)
 
     const newLogin = await request(app)
-      .post('/api/auth/login')
+      .post('/api/auth/sign-in/email')
       .send({ email: credentials.email, password: newPassword })
     expect(newLogin.status).toBe(200)
 
@@ -195,7 +191,6 @@ describe('POST /api/auth/change-password', () => {
       .send({ currentPassword: credentials.password, newPassword, revokeOtherSessions: true })
 
     expect(response.status).toBe(200)
-    expect(JSON.stringify(response.body)).not.toContain('"token"')
 
     const newCookie = sessionCookie(response)
 

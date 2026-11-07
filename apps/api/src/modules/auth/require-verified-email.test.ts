@@ -19,7 +19,7 @@ function sessionCookie(response: request.Response): string {
 }
 
 async function register(): Promise<string> {
-  const response = await request(app).post('/api/auth/register').send(credentials)
+  const response = await request(app).post('/api/auth/sign-up/email').send(credentials)
   expect(response.status).toBe(200)
   return sessionCookie(response)
 }

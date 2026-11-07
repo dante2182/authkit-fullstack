@@ -20,10 +20,10 @@ describe('rate limit de endpoints sensibles', () => {
     const { app } = await import('../../app.js')
 
     const attempt = () =>
-      request(app).post('/api/auth/forgot-password').send({ email: 'no-es-un-email' })
+      request(app).post('/api/auth/request-password-reset').send({ email: 'no-es-un-email' })
 
-    expect((await attempt()).status).toBe(422)
-    expect((await attempt()).status).toBe(422)
+    expect((await attempt()).status).toBe(400)
+    expect((await attempt()).status).toBe(400)
 
     const blocked = await attempt()
     expect(blocked.status).toBe(429)
@@ -38,10 +38,10 @@ describe('rate limit de endpoints sensibles', () => {
     const { app } = await import('../../app.js')
 
     const attempt = () =>
-      request(app).post('/api/auth/forgot-password').send({ email: 'no-es-un-email' })
+      request(app).post('/api/auth/request-password-reset').send({ email: 'no-es-un-email' })
 
-    expect((await attempt()).status).toBe(422)
-    expect((await attempt()).status).toBe(422)
-    expect((await attempt()).status).toBe(422)
+    expect((await attempt()).status).toBe(400)
+    expect((await attempt()).status).toBe(400)
+    expect((await attempt()).status).toBe(400)
   })
 })

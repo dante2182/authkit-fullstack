@@ -17,7 +17,7 @@ function getCookies(response: request.Response): string[] {
 }
 
 async function registerAndGetCookie(): Promise<string> {
-  const response = await request(app).post('/api/auth/register').send(credentials)
+  const response = await request(app).post('/api/auth/sign-up/email').send(credentials)
   const cookie = getCookies(response).find((entry) =>
     entry.startsWith('better-auth.session_token='),
   )

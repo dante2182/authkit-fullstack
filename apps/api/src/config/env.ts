@@ -24,6 +24,12 @@ export const envSchema = z
     CORS_ORIGIN: z.url().default('http://localhost:5173'),
     BETTER_AUTH_SECRET: z.string().min(32, 'Debe tener al menos 32 caracteres'),
     BETTER_AUTH_URL: z.url(),
+    // Proveedores sociales. Cada pareja es opcional, pero no se admite media
+    // pareja: con solo el client id better-auth falla al construir la URL.
+    GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+    GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+    GITHUB_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+    GITHUB_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     // Valor de `trust proxy` de Express. Ver parseTrustProxy en app.ts:
     //   false        → sin proxy delante (default seguro)
     //   1            → un salto (Vercel, Render, Railway, Fly.io, un Nginx)
@@ -50,6 +56,19 @@ export const envSchema = z
     EMAIL_FROM: z.string().min(1).default('AuthKit <no-reply@authkit.local>'),
   })
   .superRefine((value, ctx) => {
+    for (const provider of ['GOOGLE', 'GITHUB'] as const) {
+      const id = value[`${provider}_CLIENT_ID`]
+      const secret = value[`${provider}_CLIENT_SECRET`]
+
+      if (Boolean(id) !== Boolean(secret)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [`${provider}_CLIENT_ID`],
+          message: `${provider}_CLIENT_ID y ${provider}_CLIENT_SECRET deben definirse juntos`,
+        })
+      }
+    }
+
     if (value.NODE_ENV !== 'production') return
     if (!value.RESEND_API_KEY) {
       ctx.addIssue({

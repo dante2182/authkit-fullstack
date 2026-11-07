@@ -5,7 +5,8 @@ import { AuthContext } from '../context/auth-context'
 import { authService } from '../services/auth.service'
 import type { AuthUser } from '../types'
 
-// Un 401 al restaurar la sesión es el estado normal de un visitante anónimo.
+// Un 401 al llamar a endpoints con sesión obligatoria es el estado normal de
+// un visitante anónimo. /get-session ya devuelve 200 con null.
 function isAnonymousSession(error: unknown): boolean {
   return error instanceof ApiError && error.status === 401
 }
@@ -22,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authService
       .getSession()
       .then((session) => {
-        if (active) setUser(session.user)
+        if (active) setUser(session?.user ?? null)
       })
       .catch((error: unknown) => {
         if (!active) return
@@ -46,7 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // que quien llama pueda distinguir "sin sesión" de "sesión confirmada".
   const refreshSession = useCallback(async (): Promise<AuthUser | null> => {
     try {
-      const { user: nextUser } = await authService.getSession()
+      const session = await authService.getSession()
+      const nextUser = session?.user ?? null
       setUser(nextUser)
       return nextUser
     } catch (error) {

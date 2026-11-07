@@ -31,7 +31,7 @@ function lastEmailUrl(): string {
 }
 
 async function registerAndGetCookie(): Promise<string> {
-  const response = await request(app).post('/api/auth/register').send(credentials)
+  const response = await request(app).post('/api/auth/sign-up/email').send(credentials)
   const raw = response.headers['set-cookie'] as string | string[] | undefined
   const cookies = !raw ? [] : Array.isArray(raw) ? raw : [raw]
   const cookie = cookies.find((entry) => entry.startsWith('better-auth.session_token='))
@@ -43,7 +43,7 @@ async function registerAndGetCookie(): Promise<string> {
 
 async function requestResetToken(): Promise<string> {
   const response = await request(app)
-    .post('/api/auth/forgot-password')
+    .post('/api/auth/request-password-reset')
     .send({ email: credentials.email })
 
   expect(response.status).toBe(200)
@@ -59,13 +59,13 @@ beforeEach(async () => {
   send.mockClear()
 })
 
-describe('POST /api/auth/forgot-password', () => {
+describe('POST /api/auth/request-password-reset', () => {
   it('envía un correo con enlace de reset', async () => {
-    await request(app).post('/api/auth/register').send(credentials)
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
     send.mockClear()
 
     const response = await request(app)
-      .post('/api/auth/forgot-password')
+      .post('/api/auth/request-password-reset')
       .send({ email: credentials.email })
 
     expect(response.status).toBe(200)
@@ -74,9 +74,25 @@ describe('POST /api/auth/forgot-password', () => {
     expect(lastEmailUrl()).toContain('/api/auth/reset-password/')
   })
 
+  it('el enlace del correo redirige al frontend con el token', async () => {
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
+    send.mockClear()
+
+    await request(app)
+      .post('/api/auth/request-password-reset')
+      .send({ email: credentials.email, redirectTo: 'https://evil.example/phishing' })
+
+    const emailUrl = lastEmailUrl()
+    const response = await request(app).get(new URL(emailUrl).pathname + new URL(emailUrl).search)
+
+    expect(response.status).toBe(302)
+    expect(response.headers.location).toContain('http://localhost:5173/reset-password?token=')
+    expect(response.headers.location).not.toContain('evil.example')
+  })
+
   it('responde genérico y no envía nada si el email no existe', async () => {
     const response = await request(app)
-      .post('/api/auth/forgot-password')
+      .post('/api/auth/request-password-reset')
       .send({ email: 'nadie@example.com' })
 
     expect(response.status).toBe(200)
@@ -84,21 +100,21 @@ describe('POST /api/auth/forgot-password', () => {
     expect(send).not.toHaveBeenCalled()
   })
 
-  it('rechaza un email inválido con 422', async () => {
+  it('rechaza un email inválido con 400', async () => {
     const response = await request(app)
-      .post('/api/auth/forgot-password')
+      .post('/api/auth/request-password-reset')
       .send({ email: 'no-es-un-email' })
 
-    expect(response.status).toBe(422)
+    expect(response.status).toBe(400)
   })
 
   it('responde 200 aunque el envío del correo falle', async () => {
-    await request(app).post('/api/auth/register').send(credentials)
+    await request(app).post('/api/auth/sign-up/email').send(credentials)
     send.mockClear()
     send.mockRejectedValueOnce(new Error('Resend caído'))
 
     const response = await request(app)
-      .post('/api/auth/forgot-password')
+      .post('/api/auth/request-password-reset')
       .send({ email: credentials.email })
 
     expect(response.status).toBe(200)
@@ -117,12 +133,12 @@ describe('POST /api/auth/reset-password', () => {
     expect(oldSession.status).toBe(401)
 
     const oldLogin = await request(app)
-      .post('/api/auth/login')
+      .post('/api/auth/sign-in/email')
       .send({ email: credentials.email, password: credentials.password })
     expect(oldLogin.status).toBe(401)
 
     const newLogin = await request(app)
-      .post('/api/auth/login')
+      .post('/api/auth/sign-in/email')
       .send({ email: credentials.email, password: newPassword })
     expect(newLogin.status).toBe(200)
   })
@@ -135,11 +151,11 @@ describe('POST /api/auth/reset-password', () => {
     expect(response.status).toBe(400)
   })
 
-  it('rechaza una contraseña demasiado corta con 422', async () => {
+  it('rechaza una contraseña demasiado corta con 400', async () => {
     const response = await request(app)
       .post('/api/auth/reset-password')
       .send({ token: 'token-cualquiera', newPassword: '123' })
 
-    expect(response.status).toBe(422)
+    expect(response.status).toBe(400)
   })
 })

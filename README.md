@@ -39,7 +39,7 @@ pnpm --filter api db:migrate
 pnpm dev
 
 # 6. Primer administrador (obligatorio en cada proyecto nuevo)
-#    Regístrate primero con POST /api/auth/register, pon ese correo en ADMIN_EMAIL
+#    Regístrate primero con POST /api/auth/sign-up/email, pon ese correo en ADMIN_EMAIL
 #    (apps/api/.env) y ejecuta:
 pnpm --filter api admin:bootstrap
 ```
@@ -53,30 +53,55 @@ Todas las rutas públicas cuelgan de `/api`. La única excepción es la sonda de
 infraestructura `GET /health`, que vive en la raíz para que el balanceador no dependa
 del prefijo de la API.
 
-| Método | Ruta                                | Auth   | Qué hace                                                             |
-| ------ | ----------------------------------- | ------ | -------------------------------------------------------------------- |
-| GET    | `/health`                           | —      | Estado del proceso y de Postgres (503 si la DB no responde)          |
-| GET    | `/api`                              | —      | Mensaje de bienvenida                                                |
-| POST   | `/api/auth/register`                | —      | Registro con email y contraseña                                      |
-| POST   | `/api/auth/login`                   | —      | Login; la sesión viaja en una cookie httpOnly                        |
-| POST   | `/api/auth/logout`                  | —      | Cierra la sesión y expira la cookie (sirve con la sesión ya vencida) |
-| GET    | `/api/auth/session`                 | Cookie | Sesión actual                                                        |
-| POST   | `/api/auth/forgot-password`         | —      | Envía el enlace de reset (respuesta genérica, no revela si existe)   |
-| POST   | `/api/auth/reset-password`          | —      | Cambia la contraseña con el token y revoca todas las sesiones        |
-| POST   | `/api/auth/send-verification-email` | —      | Reenvía el correo de verificación                                    |
-| GET    | `/api/auth/verify-email`            | —      | Valida el token y redirige al frontend (`?error=` si falla)          |
-| GET    | `/api/auth/sessions`                | Cookie | Lista las sesiones activas (sin el token)                            |
-| DELETE | `/api/auth/sessions/:id`            | Cookie | Revoca una sesión propia por id                                      |
-| POST   | `/api/auth/sessions/revoke-others`  | Cookie | Revoca todas las sesiones menos la actual                            |
-| POST   | `/api/auth/change-password`         | Cookie | Cambia la contraseña; opcionalmente revoca las otras sesiones        |
-| GET    | `/api/users/me`                     | Cookie | Usuario actual                                                       |
-| PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                            |
-| DELETE | `/api/users/me`                     | Cookie | Borra la cuenta y expira la cookie                                   |
-| GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada (ADMIN verificado)                           |
-| PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                       |
+| Método | Ruta                                | Auth   | Qué hace                                                           |
+| ------ | ----------------------------------- | ------ | ------------------------------------------------------------------ |
+| GET    | `/health`                           | —      | Estado del proceso y de Postgres (503 si la DB no responde)        |
+| GET    | `/api`                              | —      | Mensaje de bienvenida                                              |
+| POST   | `/api/auth/sign-up/email`           | —      | Registro con email y contraseña                                    |
+| POST   | `/api/auth/sign-in/email`           | —      | Login; la sesión viaja en una cookie httpOnly                      |
+| POST   | `/api/auth/sign-in/social`          | —      | Inicia el flujo OAuth de Google o GitHub                           |
+| GET    | `/api/auth/callback/:provider`      | —      | Callback OAuth (`google`, `github`)                                |
+| POST   | `/api/auth/sign-out`                | —      | Cierra la sesión y expira la cookie                                |
+| GET    | `/api/auth/get-session`             | Cookie | Sesión actual (`200 null` si no hay sesión)                        |
+| POST   | `/api/auth/request-password-reset`  | —      | Envía el enlace de reset (respuesta genérica, no revela si existe) |
+| POST   | `/api/auth/reset-password`          | —      | Cambia la contraseña con el token y revoca todas las sesiones      |
+| POST   | `/api/auth/send-verification-email` | —      | Reenvía el correo de verificación                                  |
+| GET    | `/api/auth/verify-email`            | —      | Valida el token y redirige al frontend (`?error=` si falla)        |
+| GET    | `/api/auth/list-sessions`           | Cookie | Lista las sesiones activas                                         |
+| POST   | `/api/auth/revoke-session`          | Cookie | Revoca una sesión propia por token                                 |
+| POST   | `/api/auth/revoke-other-sessions`   | Cookie | Revoca todas las sesiones menos la actual                          |
+| POST   | `/api/auth/change-password`         | Cookie | Cambia la contraseña; opcionalmente revoca las otras sesiones      |
+| GET    | `/api/users/me`                     | Cookie | Usuario actual                                                     |
+| PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                          |
+| DELETE | `/api/users/me`                     | Cookie | Borra la cuenta y expira la cookie                                 |
+| GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada (ADMIN verificado)                         |
+| PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                     |
 
+`/api/auth/*` lo sirve el handler nativo de better-auth (`toNodeHandler(auth)`),
+montado en `src/app.ts` **antes** de `express.json()` para que el body llegue intacto.
 `BETTER_AUTH_URL` es el origen sin prefijo (`http://localhost:4000`): better-auth añade
 `/api/auth` con `basePath`.
+
+### Proveedores sociales (Google y GitHub)
+
+Cada proveedor se activa solo cuando existen sus dos variables. No se admite media
+pareja: la API falla al arrancar con un mensaje claro.
+
+```dotenv
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+```
+
+Registra estos callbacks en cada consola:
+
+- Google: `${BETTER_AUTH_URL}/api/auth/callback/google`
+- GitHub: `${BETTER_AUTH_URL}/api/auth/callback/github`
+
+El frontend inicia el flujo con `POST /api/auth/sign-in/social` enviando
+`{ provider: "google" | "github", callbackURL }`. El modelo `Account` ya guarda los
+tokens OAuth, así que no hace falta ninguna migración adicional.
 
 ### Trust proxy
 
@@ -102,8 +127,9 @@ prohibido porque permite falsificar la IP y saltarse el rate limit.
 - El reset de contraseña revoca todas las sesiones del usuario
   (`revokeSessionsOnPasswordReset`).
 - Los enlaces del correo apuntan a la API (`/api/auth/...`). El destino de la
-  redirección sale siempre de `CORS_ORIGIN`; un `callbackURL` en la query o en el body
-  se ignora. El frontend debe exponer las rutas `/reset-password` y `/verify-email`.
+  redirección se reescribe en `src/app.ts` al frontend configurado (`CORS_ORIGIN`):
+  un `callbackURL` manipulado en la query o en el body no puede desviar la
+  redirección. El frontend debe exponer las rutas `/reset-password` y `/verify-email`.
 
 ### Exigir email verificado
 
@@ -120,13 +146,14 @@ router.post('/orders', requireVerifiedEmail, ordersController.create)
 
 ### Gestión de sesiones
 
-- `GET /api/auth/sessions` devuelve las sesiones activas del usuario. El `token`
-  **nunca** aparece en el JSON: solo viaja en la cookie httpOnly. Cada entrada incluye
-  `current: true` para la sesión que hace la petición.
-- `DELETE /api/auth/sessions/:id` revoca una sesión propia. El servidor resuelve el
-  token a partir del id; un id de otro usuario devuelve `404`. Revocar la sesión actual
-  equivale a cerrar sesión (también limpia la cookie).
-- `POST /api/auth/sessions/revoke-others` revoca el resto y conserva la actual.
+Los endpoints son los nativos de better-auth:
+
+- `GET /api/auth/list-sessions` devuelve un array con las sesiones activas. Al ser el
+  handler nativo, cada entrada incluye el `token` que better-auth usa internamente; el
+  navegador sigue autenticándose solo con la cookie httpOnly.
+- `POST /api/auth/revoke-session` recibe `{ token }`. Un token de otro usuario responde
+  `200 { status: true }` pero no borra nada.
+- `POST /api/auth/revoke-other-sessions` revoca el resto y conserva la actual.
 - `POST /api/auth/change-password` recibe `currentPassword`, `newPassword` y el
   opcional `revokeOtherSessions`. Con `revokeOtherSessions: true` emite una cookie nueva
   y las anteriores dejan de servir.
@@ -171,7 +198,7 @@ Solo se devuelven campos seguros (`id`, `name`, `email`, `emailVerified`, `role`
 
 Paso obligatorio al arrancar un proyecto derivado. No existe endpoint HTTP para esto.
 
-1. Registra el primer usuario con `POST /api/auth/register`.
+1. Registra el primer usuario con `POST /api/auth/sign-up/email`.
 2. Pon su correo en `ADMIN_EMAIL` dentro de `apps/api/.env`.
 3. Ejecuta `pnpm --filter api admin:bootstrap`.
 
