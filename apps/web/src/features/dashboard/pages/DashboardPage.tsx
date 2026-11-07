@@ -1,7 +1,7 @@
-import { CheckCircle2, CircleAlert, LayoutDashboard, LogOut, MailCheck, Shield } from 'lucide-react'
-import { useState } from 'react'
+import { CheckCircle2, CircleAlert, LayoutDashboard, MailCheck, Shield } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { AppHeader } from '@/components/AppHeader'
 import { ResendVerificationButton, useAuth } from '@/features/auth'
 
 interface InfoCardProps {
@@ -25,52 +25,13 @@ function InfoCard({ title, icon, children }: InfoCardProps) {
 // Destino mínimo tras el login: demuestra la sesión, el logout y la ruta
 // protegida. Las secciones reales se añadirán encima de esta base.
 export function DashboardPage() {
-  const { user, signOut } = useAuth()
-  const navigate = useNavigate()
-  const [isSigningOut, setIsSigningOut] = useState(false)
+  const { user } = useAuth()
 
   if (!user) return null
 
-  // signOut limpia siempre el estado local, aunque falle el servidor.
-  async function handleSignOut() {
-    setIsSigningOut(true)
-
-    try {
-      await signOut()
-    } finally {
-      navigate('/login', { replace: true })
-    }
-  }
-
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-indigo-600">
-              <LayoutDashboard className="size-4 text-white" aria-hidden="true" />
-            </span>
-            <span className="font-semibold tracking-tight text-slate-900">AuthKit</span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium text-slate-900">{user.name}</p>
-              <p className="text-xs text-slate-500">{user.email}</p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <LogOut className="size-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Cerrar sesión</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6">
         <section>
@@ -140,10 +101,16 @@ export function DashboardPage() {
         </InfoCard>
 
         <section className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
-          <p className="text-sm font-medium text-slate-900">Más secciones próximamente</p>
+          <p className="text-sm font-medium text-slate-900">Gestiona tu cuenta</p>
           <p className="mt-1 text-xs text-slate-500">
-            Perfil, cambio de contraseña y gestión de sesiones se conectarán en la siguiente fase.
+            Cambia tu nombre, tu contraseña y revisa las sesiones abiertas.
           </p>
+          <Link
+            to="/account"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-2 focus-visible:outline-none"
+          >
+            Ir a mi cuenta
+          </Link>
         </section>
       </main>
     </div>

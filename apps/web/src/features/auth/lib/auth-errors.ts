@@ -4,6 +4,7 @@ import { ApiError } from '@/services/http'
 // Aquí se traducen los casos que el usuario puede provocar de verdad.
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: 'Correo o contraseña incorrectos.',
+  INVALID_PASSWORD: 'La contraseña actual no es correcta.',
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: 'Ya existe una cuenta con ese correo.',
   USER_ALREADY_EXISTS: 'Ya existe una cuenta con ese correo.',
   EMAIL_NOT_VERIFIED: 'Debes verificar tu correo antes de continuar.',

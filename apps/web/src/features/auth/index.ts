@@ -17,7 +17,15 @@ export { ResetPasswordPage } from './pages/ResetPasswordPage'
 export { VerifyEmailPage } from './pages/VerifyEmailPage'
 
 // Componentes que otras features pueden reutilizar
+export { Alert } from './components/Alert'
+export { FullPageLoader } from './components/FullPageLoader'
+export { PasswordField } from './components/PasswordField'
 export { ResendVerificationButton } from './components/ResendVerificationButton'
+export { SubmitButton } from './components/SubmitButton'
+export { TextField } from './components/TextField'
+
+// Traducción compartida de códigos de error de la API/better-auth
+export { authErrorMessage } from './lib/auth-errors'
 
 // Tipos del contrato
 export type { AuthSession, AuthUser, SessionResponse, UserRole } from './types'
