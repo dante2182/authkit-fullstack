@@ -2,20 +2,9 @@ import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { emailService, type EmailMessage } from '../shared/email/email.service.js'
 import { passwordResetEmail, verificationEmail } from '../shared/email/templates.js'
+import { buildSocialProvidersConfig } from './auth-capabilities.js'
 import { env } from './env.js'
 import { prisma } from './prisma.js'
-
-// Solo se declara el proveedor cuando existe la pareja completa de credenciales.
-// Así el backend arranca sin OAuth en desarrollo y lo habilita al rellenar el .env.
-const google =
-  env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
-    ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }
-    : null
-
-const github =
-  env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
-    ? { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET }
-    : null
 
 // better-auth espera a que el callback termine, así que aquí NO se hace await del
 // envío: el correo sale en segundo plano y un fallo de Resend se registra sin
@@ -35,7 +24,9 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [env.CORS_ORIGIN],
   emailAndPassword: {
-    enabled: true,
+    enabled: env.AUTH_EMAIL_PASSWORD_ENABLED,
+    // Registro cerrado: los usuarios existentes siguen entrando con contraseña.
+    disableSignUp: !env.AUTH_SIGN_UP_ENABLED,
     // Un reset de contraseña revoca todas las sesiones abiertas del usuario.
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
@@ -51,10 +42,8 @@ export const auth = betterAuth({
       sendEmailInBackground(verificationEmail({ to: user.email, name: user.name }, url))
     },
   },
-  socialProviders: {
-    ...(google ? { google } : {}),
-    ...(github ? { github } : {}),
-  },
+  // Cada proveedor se registra solo con su pareja completa de credenciales.
+  socialProviders: buildSocialProvidersConfig(),
   user: {
     additionalFields: {
       // El rol viaja en `session.user.role` y en `req.auth.user.role`.

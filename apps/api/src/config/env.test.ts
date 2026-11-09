@@ -79,3 +79,100 @@ describe('envSchema', () => {
     expect(parsed.GITHUB_CLIENT_ID).toBeUndefined()
   })
 })
+
+describe('modos de autenticación', () => {
+  const devEnv = { ...productionEnv, NODE_ENV: 'development' }
+
+  it('activa credenciales y registro por defecto', () => {
+    const parsed = envSchema.parse(devEnv)
+
+    expect(parsed.AUTH_EMAIL_PASSWORD_ENABLED).toBe(true)
+    expect(parsed.AUTH_SIGN_UP_ENABLED).toBe(true)
+  })
+
+  it('interpreta "false" en AUTH_EMAIL_PASSWORD_ENABLED', () => {
+    const parsed = envSchema.parse({
+      ...devEnv,
+      AUTH_EMAIL_PASSWORD_ENABLED: 'false',
+      GOOGLE_CLIENT_ID: 'google-id',
+      GOOGLE_CLIENT_SECRET: 'google-secret',
+    })
+
+    expect(parsed.AUTH_EMAIL_PASSWORD_ENABLED).toBe(false)
+  })
+
+  it('interpreta "false" en AUTH_SIGN_UP_ENABLED', () => {
+    const parsed = envSchema.parse({ ...devEnv, AUTH_SIGN_UP_ENABLED: 'false' })
+
+    expect(parsed.AUTH_SIGN_UP_ENABLED).toBe(false)
+  })
+
+  it('trata los flags vacíos como ausentes y aplica el default', () => {
+    const parsed = envSchema.parse({
+      ...devEnv,
+      AUTH_EMAIL_PASSWORD_ENABLED: '',
+      AUTH_SIGN_UP_ENABLED: '',
+    })
+
+    expect(parsed.AUTH_EMAIL_PASSWORD_ENABLED).toBe(true)
+    expect(parsed.AUTH_SIGN_UP_ENABLED).toBe(true)
+  })
+
+  it('trata solo espacios como ausente', () => {
+    const parsed = envSchema.parse({
+      ...devEnv,
+      AUTH_EMAIL_PASSWORD_ENABLED: '   ',
+      AUTH_SIGN_UP_ENABLED: '   ',
+    })
+
+    expect(parsed.AUTH_EMAIL_PASSWORD_ENABLED).toBe(true)
+    expect(parsed.AUTH_SIGN_UP_ENABLED).toBe(true)
+  })
+
+  it('respeta cada flag cuando uno está vacío y el otro en "false"', () => {
+    const parsed = envSchema.parse({
+      ...devEnv,
+      AUTH_EMAIL_PASSWORD_ENABLED: '',
+      AUTH_SIGN_UP_ENABLED: 'false',
+    })
+
+    expect(parsed.AUTH_EMAIL_PASSWORD_ENABLED).toBe(true)
+    expect(parsed.AUTH_SIGN_UP_ENABLED).toBe(false)
+  })
+
+  it.each(['yes', 'FALSE', '1'])('rechaza el valor inválido %s sin coercionar', (value) => {
+    const result = envSchema.safeParse({ ...devEnv, AUTH_EMAIL_PASSWORD_ENABLED: value })
+
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) => issue.path.includes('AUTH_EMAIL_PASSWORD_ENABLED')),
+    ).toBe(true)
+  })
+
+  it('mantiene el rechazo de SENSITIVE_RATE_LIMIT_ENABLED vacío', () => {
+    // Invariante: el helper nuevo no cambia el comportamiento de los flags existentes.
+    const result = envSchema.safeParse({ ...devEnv, SENSITIVE_RATE_LIMIT_ENABLED: '' })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rechaza un modo sin ningún método de acceso', () => {
+    const result = envSchema.safeParse({ ...devEnv, AUTH_EMAIL_PASSWORD_ENABLED: 'false' })
+
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) => issue.path.includes('AUTH_EMAIL_PASSWORD_ENABLED')),
+    ).toBe(true)
+  })
+
+  it('acepta solo proveedores cuando hay una pareja completa', () => {
+    const parsed = envSchema.parse({
+      ...devEnv,
+      AUTH_EMAIL_PASSWORD_ENABLED: 'false',
+      GOOGLE_CLIENT_ID: 'google-id',
+      GOOGLE_CLIENT_SECRET: 'google-secret',
+    })
+
+    expect(parsed.AUTH_EMAIL_PASSWORD_ENABLED).toBe(false)
+  })
+})
