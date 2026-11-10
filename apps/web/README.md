@@ -10,6 +10,7 @@ pnpm build        # typecheck (tsc -b) + build de producción
 pnpm preview      # sirve el build de dist/
 pnpm lint         # ESLint (flat config)
 pnpm lint:fix     # ESLint con --fix
+pnpm test:composition  # renderiza login/registro por modo y comprueba qué pinta
 pnpm typecheck    # solo TypeScript, sin emitir
 ```
 
@@ -115,7 +116,8 @@ de acceso (muestran el error y un reintento); las rutas protegidas siguen funcio
 1. Cargando: solo el indicador; no se adelanta un método que luego desaparece.
 2. Error: aviso y botón de reintento. Sin contrato no se inventan métodos (falla cerrado).
 3. Sin ningún método: aviso de configuración del servidor.
-4. Registro cerrado (`signUpEnabled: false`): mensaje neutro, sin formulario.
+4. Registro cerrado (`signUpEnabled: false`): en `/register`, mensaje neutro, sin formulario.
+   En `/login` se oculta el enlace para crear cuenta.
 5. Si hay credenciales: formulario. Si hay proveedores: `SocialButtons`, separados por `AuthDivider`
    cuando conviven ambos.
 

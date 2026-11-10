@@ -23,18 +23,18 @@ Rama: `feat/api-auth-capabilities`. Runners: `pnpm --filter api test` (Vitest + 
 
 ## Tasks
 
-| ID  | Specs      | Ruta   | Estado   | Evidencia                                                                                               |
-| --- | ---------- | ------ | -------- | ------------------------------------------------------------------------------------------------------- |
-| T1  | S1, S2     | inline | hecho    | `src/config/env.ts` + 5 tests en `env.test.ts` (RED → GREEN)                                            |
-| T2  | S3, S4     | inline | hecho    | `auth-capabilities.ts` + `modules/config/config.routes.ts`                                              |
-| T3  | S5, S6, S7 | inline | hecho    | 5 tests de enforcement en `modules/config/config.test.ts`                                               |
-| T4  | S8         | inline | hecho    | `README.md` + `apps/api/.env.example`                                                                   |
-| T5  | S9, S10    | inline | hecho    | checks OK; 121 tests OK; verificador: S1 resuelto, sin bloqueadores                                     |
-| T6  | S11        | inline | hecho    | `types`, `auth.service`, `auth-capabilities-context`, `useAuthCapabilities`, `AuthCapabilitiesProvider` |
-| T7  | S12, S13   | inline | hecho    | `LoginPage.tsx` y `RegisterPage.tsx` componen según capacidades                                         |
-| T8  | S14        | inline | hecho    | `SocialButtons.tsx` + `AuthDivider.tsx` + `AuthMethodsStatus.tsx`                                       |
-| T9  | S15        | inline | hecho    | barril, `auth-errors.ts`, `apps/web/README.md`                                                          |
-| T10 | S11–S15    | inline | en curso | `pnpm check` y `pnpm --filter web build` OK; verificador pendiente                                      |
+| ID  | Specs      | Ruta   | Estado | Evidencia                                                                                               |
+| --- | ---------- | ------ | ------ | ------------------------------------------------------------------------------------------------------- |
+| T1  | S1, S2     | inline | hecho  | `src/config/env.ts` + 5 tests en `env.test.ts` (RED → GREEN)                                            |
+| T2  | S3, S4     | inline | hecho  | `auth-capabilities.ts` + `modules/config/config.routes.ts`                                              |
+| T3  | S5, S6, S7 | inline | hecho  | 5 tests de enforcement en `modules/config/config.test.ts`                                               |
+| T4  | S8         | inline | hecho  | `README.md` + `apps/api/.env.example`                                                                   |
+| T5  | S9, S10    | inline | hecho  | checks OK; 121 tests OK; verificador: S1 resuelto, sin bloqueadores                                     |
+| T6  | S11        | inline | hecho  | `types`, `auth.service`, `auth-capabilities-context`, `useAuthCapabilities`, `AuthCapabilitiesProvider` |
+| T7  | S12, S13   | inline | hecho  | `LoginPage.tsx` y `RegisterPage.tsx` componen según capacidades                                         |
+| T8  | S14        | inline | hecho  | `SocialButtons.tsx` + `AuthDivider.tsx` + `AuthMethodsStatus.tsx`                                       |
+| T9  | S15        | inline | hecho  | barril, `auth-errors.ts`, `apps/web/README.md`                                                          |
+| T10 | S11–S15    | inline | hecho  | `pnpm check` + build OK; probe de composición 12/12; verificador sin bloqueadores                       |
 
 ## Log
 
@@ -89,4 +89,6 @@ ya hice el push, no hice el merge, ahora haz el frontend.
 - `SocialButtons` navega con `window.location.assign(url)`; `callbackURL` es absoluto (`window.location.origin` + destino) para que better-auth pueda volver al SPA. Un id desconocido se pinta con el id crudo.
 - `AuthCapabilities` tipa `socialProviders: string[]` a propósito: el contrato es abierto y la UI no debe romperse si mañana aparece otro proveedor.
 - No se instalaron dependencias y no se añadió runner de tests al frontend: `apps/web` no tiene Vitest ni script `test`. Los checks proporcionales son `pnpm check` y `pnpm --filter web build`.
-- Verificación observada: `pnpm check` → OK (Prettier, ESLint api+web, `tsc -b`); `pnpm --filter web build` → OK (2076 módulos, sin warnings de tipos). Sin regresiones en `pnpm --filter api test` (no se tocó la API).
+- Sí se añadió una prueba de composición sin runner (`scripts/auth-composition.probe.mjs`, `pnpm --filter web test:composition`): renderiza login y registro con Vite SSR y comprueba qué se pinta en 12 escenarios (carga, error, sin métodos, defaults, registro cerrado, solo social, proveedor desconocido). Nació del probe independiente del verificador para cubrir el riesgo de no tener tests.
+- Verificación observada: `pnpm check` → OK (Prettier, ESLint api+web, `tsc -b`); `pnpm --filter web build` → OK (2076 módulos); `pnpm --filter web test:composition` → **12/12**. Sin regresiones en `pnpm --filter api test` (121 tests, no se tocó la API).
+- Verificador independiente: S11–S15 **cumplidos**, sin bloqueadores. Avisos: StrictMode dispara la carga del contrato dos veces en dev (una en build); `SocialButtons` no cancela la navegación si el componente se desmonta con el POST en vuelo; nit del README corregido. Sin ejecución real del round-trip OAuth (no hay navegador/runner).
