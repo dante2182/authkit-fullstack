@@ -5,7 +5,7 @@ Rama: `feat/api-auth-capabilities`. Runner: `pnpm --filter api test` (Vitest + S
 
 ## Specs
 
-- **S1 — Flags de entorno**: `AUTH_EMAIL_PASSWORD_ENABLED` y `AUTH_SIGN_UP_ENABLED` en `src/config/env.ts`, con el helper `booleanFlag` existente, valores `"true"`/`"false"` y default `true`. Ausentes o vacías equivalen al default. Documentadas en `apps/api/.env.example`.
+- **S1 — Flags de entorno**: `AUTH_EMAIL_PASSWORD_ENABLED` y `AUTH_SIGN_UP_ENABLED` en `src/config/env.ts`, con valores `"true"`/`"false"` y default `true`. Ausentes, vacías o solo espacios equivalen al default (`optionalBooleanFlag`). Documentadas en `apps/api/.env.example`.
 - **S2 — Guarda de arranque**: si `AUTH_EMAIL_PASSWORD_ENABLED=false` y no hay ninguna pareja completa de proveedor social, el esquema de entorno falla con un mensaje que explica que no quedaría ningún método de acceso.
 - **S3 — Fuente única**: un solo módulo deriva las capacidades desde `env` y `src/config/auth.ts` consume ese mismo módulo. La lista pública de proveedores no se escribe a mano en dos sitios.
 - **S4 — Endpoint**: `GET /api/config/auth` público (sin sesión, sin rate limit de `/auth`) que responde `{ emailPassword: { enabled, signUpEnabled }, socialProviders: string[] }`, con proveedores en orden estable `google`, `github`.
@@ -18,13 +18,13 @@ Rama: `feat/api-auth-capabilities`. Runner: `pnpm --filter api test` (Vitest + S
 
 ## Tasks
 
-| ID  | Specs      | Ruta   | Estado   | Evidencia                                                     |
-| --- | ---------- | ------ | -------- | ------------------------------------------------------------- |
-| T1  | S1, S2     | inline | hecho    | `src/config/env.ts` + 5 tests en `env.test.ts` (RED → GREEN)  |
-| T2  | S3, S4     | inline | hecho    | `auth-capabilities.ts` + `modules/config/config.routes.ts`    |
-| T3  | S5, S6, S7 | inline | hecho    | 5 tests de enforcement en `modules/config/config.test.ts`     |
-| T4  | S8         | inline | hecho    | `README.md` + `apps/api/.env.example`                         |
-| T5  | S9, S10    | inline | en curso | format/lint/typecheck OK; 114 tests OK; verificador pendiente |
+| ID  | Specs      | Ruta   | Estado | Evidencia                                                           |
+| --- | ---------- | ------ | ------ | ------------------------------------------------------------------- |
+| T1  | S1, S2     | inline | hecho  | `src/config/env.ts` + 5 tests en `env.test.ts` (RED → GREEN)        |
+| T2  | S3, S4     | inline | hecho  | `auth-capabilities.ts` + `modules/config/config.routes.ts`          |
+| T3  | S5, S6, S7 | inline | hecho  | 5 tests de enforcement en `modules/config/config.test.ts`           |
+| T4  | S8         | inline | hecho  | `README.md` + `apps/api/.env.example`                               |
+| T5  | S9, S10    | inline | hecho  | checks OK; 121 tests OK; verificador: S1 resuelto, sin bloqueadores |
 
 ## Log
 
@@ -63,4 +63,5 @@ okey primero vamos a iniciar con el backend:
 - Corrección acotada: helper `optionalBooleanFlag` (vacío → `undefined` antes de `booleanFlag`) solo para los flags nuevos; `booleanFlag` intacto para `SENSITIVE_RATE_LIMIT_ENABLED`, con test que fija ese invariante. Añadidos tests de vacío, solo espacios, mezcla vacío/`false` y valores inválidos (`yes`, `FALSE`, `1`).
 - Recheck del verificador sobre `30c16d5`: **S1 resuelto**, sin bloqueadores nuevos. Probes de arranque real: vacíos → `true/true`; `false` sin proveedor → exit 1 con la guarda; `false` + pareja Google → arranca; ausentes → defaults; `SENSITIVE_RATE_LIMIT_ENABLED=` → mismo rechazo que en `8927df3`.
 - Avisos aceptados sin cambio: `env.ts` mantiene su propia enumeración de proveedores para validar parejas (no es la lista pública); no se añade un test de rate limit para `/api/config/auth` porque el montaje en `app.ts` lo hace estructuralmente imposible.
-- Tras el lote: `pnpm --filter api test` → **115 tests OK**.
+- Tras el lote: `pnpm --filter api test` → **121 tests OK** (115 tras la corrección + 6 probes durables del verificador, ya commiteados como regresión).
+- Revisión nativa (risk, readability, reliability): **approved** y reconocida. Hallazgos informativos pendientes, ninguno bloqueante: vacío en `AUTH_SIGN_UP_ENABLED` falla abierto (es el comportamiento pedido en S1, endurecerlo es opcional); regla de pareja de proveedores duplicada entre `env.ts` y `auth-capabilities.ts`; los tests de `config.test.ts` no aíslan flags ambientales; no hay test HTTP de rechazo de alta social (solo `auth.$context`); `beforeEach` resetea la base incluso para tests sin datos.
