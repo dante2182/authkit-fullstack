@@ -10,6 +10,7 @@ pnpm build        # typecheck (tsc -b) + build de producción
 pnpm preview      # sirve el build de dist/
 pnpm lint         # ESLint (flat config)
 pnpm lint:fix     # ESLint con --fix
+pnpm test:composition  # renderiza login/registro por modo y comprueba qué pinta
 pnpm typecheck    # solo TypeScript, sin emitir
 ```
 
@@ -37,14 +38,14 @@ src/
 │  └─ NotFoundPage.tsx
 ├─ features/
 │  ├─ auth/
-│  │  ├─ components/    # layout, campos, guards y botones
-│  │  ├─ context/       # AuthContext
-│  │  ├─ hooks/         # useAuth
+│  │  ├─ components/    # layout, campos, botones sociales y guards
+│  │  ├─ context/       # AuthContext (sesión) y AuthCapabilitiesContext (métodos)
+│  │  ├─ hooks/         # useAuth y useAuthCapabilities
 │  │  ├─ lib/           # traducción de errores de autenticación
 │  │  ├─ pages/         # login, registro, recuperación y verificación
-│  │  ├─ providers/     # AuthProvider (restaura la sesión)
+│  │  ├─ providers/     # AuthProvider (sesión) y AuthCapabilitiesProvider
 │  │  ├─ services/      # llamadas a la API
-│  │  ├─ types/         # contrato de sesión y usuario
+│  │  ├─ types/         # contrato de sesión, usuario y capacidades
 │  │  └─ index.ts       # API pública de la feature
 │  ├─ admin/
 │  │  ├─ components/    # guard, tabla, selector de rol y paginación
@@ -81,6 +82,7 @@ El frontend consume estos endpoints de `apps/api`:
 
 | Pantalla               | Endpoint                                                                |
 | ---------------------- | ----------------------------------------------------------------------- |
+| Capacidades de acceso  | `GET /api/config/auth`                                                  |
 | Registro               | `POST /api/auth/sign-up/email`                                          |
 | Login                  | `POST /api/auth/sign-in/email`                                          |
 | Login social           | `POST /api/auth/sign-in/social` + `GET /api/auth/callback/:provider`    |
@@ -95,6 +97,45 @@ con `null` cuando no hay sesión.
 
 La sesión vive en una cookie `httpOnly`: el cliente usa `credentials: 'include'` y nunca guarda
 tokens en el navegador.
+
+### Métodos de acceso
+
+La pantalla de acceso no se configura en el frontend: la compone con lo que publica
+`GET /api/config/auth`.
+
+```json
+{ "emailPassword": { "enabled": true, "signUpEnabled": true }, "socialProviders": ["google"] }
+```
+
+`AuthCapabilitiesProvider` pide ese contrato una vez al arrancar y lo comparte por contexto.
+Es estado independiente de la sesión: si la consulta falla, solo se ven afectadas las pantallas
+de acceso (muestran el error y un reintento); las rutas protegidas siguen funcionando.
+
+`LoginPage` y `RegisterPage` pintan, en este orden:
+
+1. Cargando: solo el indicador; no se adelanta un método que luego desaparece.
+2. Error: aviso y botón de reintento. Sin contrato no se inventan métodos (falla cerrado).
+3. Sin ningún método: aviso de configuración del servidor.
+4. Registro cerrado (`signUpEnabled: false`): en `/register`, mensaje neutro, sin formulario.
+   En `/login` se oculta el enlace para crear cuenta.
+5. Si hay credenciales: formulario. Si hay proveedores: `SocialButtons`, separados por `AuthDivider`
+   cuando conviven ambos.
+
+Los proveedores salen de `socialProviders`, así que un id desconocido se pinta con su nombre
+crudo en vez de romper la página. El login social llama a `POST /api/auth/sign-in/social` con
+`callbackURL` y navega a la `url` devuelta: la sesión se crea en el callback del backend,
+nunca en el SPA.
+
+La regla la aplica la API, no la UI: aunque alguien llame al endpoint directamente, un método
+apagado responde `400 EMAIL_PASSWORD_DISABLED` / `400 EMAIL_PASSWORD_SIGN_UP_DISABLED`, y un
+proveedor sin configurar `404 PROVIDER_NOT_FOUND`. Esos códigos están traducidos en
+`lib/auth-errors.ts`.
+
+Si el callback del proveedor falla, better-auth vuelve a la misma pantalla con `?error=<código>`.
+`SocialButtons` envía `errorCallbackURL` para eso; `useOAuthCallbackError` captura el código,
+lo traduce y limpia la URL para que recargar no repita el aviso. El caso típico es
+`account_not_linked`: ya existe una cuenta con ese correo pero no verificó el email, así que
+la vinculación automática se rechaza y hay que entrar con la contraseña y verificar el correo.
 
 Rutas del frontend: `/login`, `/register`, `/forgot-password`, `/reset-password?token=…`,
 `/verify-email`, `/dashboard`, `/account` y `/admin/users` (protegidas). `/` redirige a

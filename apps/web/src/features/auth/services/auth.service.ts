@@ -1,11 +1,14 @@
 import { request } from '@/services/http'
 import type {
+  AuthCapabilities,
   AuthUser,
   ForgotPasswordInput,
   LoginInput,
   RegisterInput,
   ResetPasswordInput,
   SessionResponse,
+  SocialSignInInput,
+  SocialSignInResponse,
 } from '../types'
 
 // Los endpoints de autenticación son los nativos de better-auth montados en
@@ -22,6 +25,18 @@ export const authService = {
 
   login(input: LoginInput) {
     return request<{ user: AuthUser }>('/auth/sign-in/email', { method: 'POST', body: input })
+  },
+
+  // Devuelve la URL de autorización del proveedor. El navegador navega a ella:
+  // la sesión se crea en el callback del backend, nunca en el SPA.
+  signInSocial(input: SocialSignInInput) {
+    return request<SocialSignInResponse>('/auth/sign-in/social', { method: 'POST', body: input })
+  },
+
+  // Contrato público de la API: qué métodos de acceso están activos en este
+  // despliegue. Se lee una vez al arrancar.
+  getAuthCapabilities() {
+    return request<AuthCapabilities>('/config/auth')
   },
 
   logout() {

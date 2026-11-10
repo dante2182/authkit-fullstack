@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test:composition": "node scripts/auth-composition.probe.mjs",
     "typecheck": "tsc -b",
     "preview": "vite preview"
   },

@@ -2,8 +2,11 @@
 
 // Contexto y provider
 export { AuthProvider } from './providers/AuthProvider'
+export { AuthCapabilitiesProvider } from './providers/AuthCapabilitiesProvider'
 export { useAuth } from './hooks/use-auth'
+export { useAuthCapabilities } from './hooks/use-auth-capabilities'
 export type { AuthContextValue } from './context/auth-context'
+export type { AuthCapabilitiesContextValue } from './context/auth-capabilities-context'
 
 // Layout y guards
 export { AuthLayout } from './components/AuthLayout'
@@ -18,6 +21,8 @@ export { VerifyEmailPage } from './pages/VerifyEmailPage'
 
 // Componentes que otras features pueden reutilizar
 export { Alert } from './components/Alert'
+export { AuthDivider } from './components/AuthDivider'
+export { SocialButtons } from './components/SocialButtons'
 export { FullPageLoader } from './components/FullPageLoader'
 export { PasswordField } from './components/PasswordField'
 export { ResendVerificationButton } from './components/ResendVerificationButton'
@@ -28,4 +33,12 @@ export { TextField } from './components/TextField'
 export { authErrorMessage } from './lib/auth-errors'
 
 // Tipos del contrato
-export type { AuthSession, AuthUser, SessionResponse, UserRole } from './types'
+export type {
+  AuthCapabilities,
+  AuthSession,
+  AuthUser,
+  SessionResponse,
+  SocialSignInInput,
+  SocialSignInResponse,
+  UserRole,
+} from './types'

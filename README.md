@@ -57,6 +57,7 @@ del prefijo de la API.
 | ------ | ----------------------------------- | ------ | ------------------------------------------------------------------ |
 | GET    | `/health`                           | —      | Estado del proceso y de Postgres (503 si la DB no responde)        |
 | GET    | `/api`                              | —      | Mensaje de bienvenida                                              |
+| GET    | `/api/config/auth`                  | —      | Capacidades de autenticación para el frontend (sin secretos)       |
 | POST   | `/api/auth/sign-up/email`           | —      | Registro con email y contraseña                                    |
 | POST   | `/api/auth/sign-in/email`           | —      | Login; la sesión viaja en una cookie httpOnly                      |
 | POST   | `/api/auth/sign-in/social`          | —      | Inicia el flujo OAuth de Google o GitHub                           |
@@ -102,6 +103,52 @@ Registra estos callbacks en cada consola:
 El frontend inicia el flujo con `POST /api/auth/sign-in/social` enviando
 `{ provider: "google" | "github", callbackURL }`. El modelo `Account` ya guarda los
 tokens OAuth, así que no hace falta ninguna migración adicional.
+
+### Modos de autenticación
+
+Dos flags eligen con qué se entra. Los defaults reproducen el comportamiento
+histórico: credenciales activas y registro abierto. Se aplican en el servidor, no
+solo en la UI.
+
+| Variable                      | Default | Qué hace                                                  |
+| ----------------------------- | ------- | --------------------------------------------------------- |
+| `AUTH_EMAIL_PASSWORD_ENABLED` | `true`  | Habilita login y registro con email/contraseña            |
+| `AUTH_SIGN_UP_ENABLED`        | `true`  | Permite crear cuentas nuevas (credenciales y proveedores) |
+
+| Caso                           | Configuración                                             |
+| ------------------------------ | --------------------------------------------------------- |
+| Ambos métodos (e-commerce)     | defaults + pareja de proveedor                            |
+| Solo credenciales (inventario) | defaults, sin `GOOGLE_*` ni `GITHUB_*`                    |
+| Solo proveedores (blog)        | `AUTH_EMAIL_PASSWORD_ENABLED=false` + una pareja completa |
+| Panel interno sin registro     | `AUTH_SIGN_UP_ENABLED=false`                              |
+
+`AUTH_EMAIL_PASSWORD_ENABLED=false` sin ningún proveedor completo impide arrancar:
+la API no tendría ninguna forma de autenticar.
+
+Consecuencias en las rutas nativas:
+
+- Credenciales apagadas: `sign-in/email` y `sign-up/email` responden `400` con
+  `EMAIL_PASSWORD_DISABLED` y `EMAIL_PASSWORD_SIGN_UP_DISABLED`.
+- Registro cerrado: el registro por email devuelve `400 EMAIL_PASSWORD_SIGN_UP_DISABLED`,
+  los usuarios existentes siguen iniciando sesión, y cada proveedor recibe
+  `disableSignUp: true`.
+- Proveedor no configurado (sin sus dos variables): `404 PROVIDER_NOT_FOUND`. Una
+  pareja incompleta no llega a servir rutas: la API no arranca.
+
+`GET /api/config/auth` publica el contrato que consume el frontend (sin secretos,
+sin sesión y sin el rate limit de `/auth`):
+
+```json
+{
+  "emailPassword": { "enabled": true, "signUpEnabled": true },
+  "socialProviders": ["google"]
+}
+```
+
+**Account linking**: se mantiene el comportamiento por defecto de better-auth (un
+login social con el mismo email puede vincularse a la cuenta existente). Este
+contrato no lo cambia; si un proyecto derivado quiere exigir vinculación explícita,
+se configura `account.accountLinking` en `src/config/auth.ts`.
 
 ### Trust proxy
 

@@ -1,6 +1,12 @@
 import 'dotenv/config'
 import { z } from 'zod'
 
+// `.env` suele traer variables opcionales como `CLAVE=`. Para Zod eso es un
+// string vacío, no `undefined`, así que `.optional()` no basta. Se normaliza
+// antes de validar: vacío equivale a no definido.
+const emptyToUndefined = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value
+
 // Interpreta "true"/"false" como booleano real (z.coerce.boolean trataría
 // la cadena "false" como true).
 const booleanFlag = (defaultValue: 'true' | 'false') =>
@@ -9,11 +15,10 @@ const booleanFlag = (defaultValue: 'true' | 'false') =>
     .default(defaultValue)
     .transform((value) => value === 'true')
 
-// `.env` suele traer variables opcionales como `CLAVE=`. Para Zod eso es un
-// string vacío, no `undefined`, así que `.optional()` no basta. Se normaliza
-// antes de validar: vacío equivale a no definido.
-const emptyToUndefined = (value: unknown) =>
-  typeof value === 'string' && value.trim() === '' ? undefined : value
+// Igual que booleanFlag, pero una variable vacía (`FLAG=`) equivale a ausente y
+// toma el default en vez de romper el arranque.
+const optionalBooleanFlag = (defaultValue: 'true' | 'false') =>
+  z.preprocess(emptyToUndefined, booleanFlag(defaultValue))
 
 // Esquema único: valida y tipa el entorno antes de arrancar.
 export const envSchema = z
@@ -24,6 +29,13 @@ export const envSchema = z
     CORS_ORIGIN: z.url().default('http://localhost:5173'),
     BETTER_AUTH_SECRET: z.string().min(32, 'Debe tener al menos 32 caracteres'),
     BETTER_AUTH_URL: z.url(),
+    // Modo de autenticación. Cada proyecto derivado elige con qué se entra:
+    //   credenciales on + proveedores  → ambos (default)
+    //   credenciales on + sin parejas  → solo email/contraseña
+    //   credenciales off + una pareja  → solo proveedores sociales
+    // El registro se cierra con AUTH_SIGN_UP_ENABLED=false (paneles internos).
+    AUTH_EMAIL_PASSWORD_ENABLED: optionalBooleanFlag('true'),
+    AUTH_SIGN_UP_ENABLED: optionalBooleanFlag('true'),
     // Proveedores sociales. Cada pareja es opcional, pero no se admite media
     // pareja: con solo el client id better-auth falla al construir la URL.
     GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
@@ -56,6 +68,8 @@ export const envSchema = z
     EMAIL_FROM: z.string().min(1).default('AuthKit <no-reply@authkit.local>'),
   })
   .superRefine((value, ctx) => {
+    let hasCompleteProvider = false
+
     for (const provider of ['GOOGLE', 'GITHUB'] as const) {
       const id = value[`${provider}_CLIENT_ID`]
       const secret = value[`${provider}_CLIENT_SECRET`]
@@ -67,6 +81,19 @@ export const envSchema = z
           message: `${provider}_CLIENT_ID y ${provider}_CLIENT_SECRET deben definirse juntos`,
         })
       }
+
+      if (id && secret) hasCompleteProvider = true
+    }
+
+    // Sin credenciales y sin proveedor la API arrancaría sin ninguna forma de
+    // entrar: es un error de configuración, no un modo válido.
+    if (!value.AUTH_EMAIL_PASSWORD_ENABLED && !hasCompleteProvider) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['AUTH_EMAIL_PASSWORD_ENABLED'],
+        message:
+          'Sin email/contraseña hace falta al menos un proveedor social completo (GOOGLE_* o GITHUB_*)',
+      })
     }
 
     if (value.NODE_ENV !== 'production') return
