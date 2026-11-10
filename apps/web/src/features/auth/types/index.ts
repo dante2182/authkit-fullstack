@@ -50,3 +50,25 @@ export interface ResetPasswordInput {
   token: string
   newPassword: string
 }
+
+// Métodos de acceso que publica `GET /api/config/auth`. El frontend dibuja la
+// pantalla a partir de esto: nunca deduce el modo desde su propio entorno.
+export interface AuthCapabilities {
+  emailPassword: {
+    enabled: boolean
+    signUpEnabled: boolean
+  }
+  // Ids tal cual los devuelve la API (hoy: google, github).
+  socialProviders: string[]
+}
+
+export interface SocialSignInInput {
+  provider: string
+  callbackURL: string
+}
+
+export interface SocialSignInResponse {
+  // URL de autorización del proveedor a la que hay que navegar.
+  url: string
+  redirect: boolean
+}
