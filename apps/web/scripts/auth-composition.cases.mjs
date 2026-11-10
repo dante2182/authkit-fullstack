@@ -24,7 +24,7 @@ const capabilities = (enabled, signUpEnabled, socialProviders) => ({
   socialProviders,
 })
 
-function render(Page, state) {
+function render(Page, state, initialEntry = '/login') {
   const value = {
     capabilities: state.capabilities ?? null,
     isLoading: state.isLoading ?? false,
@@ -35,7 +35,7 @@ function render(Page, state) {
   return renderToStaticMarkup(
     React.createElement(
       MemoryRouter,
-      { initialEntries: ['/login'] },
+      { initialEntries: [initialEntry] },
       React.createElement(
         AuthContext.Provider,
         { value: auth },
@@ -125,4 +125,30 @@ check(
   render(RegisterPage, { capabilities: capabilities(false, false, ['google']) }),
   ['El registro está cerrado. Si ya tienes cuenta, inicia sesión.'],
   ['Crear cuenta', 'Continuar con', 'Te darás de alta'],
+)
+check(
+  'login/oauth-account-not-linked',
+  render(
+    LoginPage,
+    { capabilities: capabilities(true, true, ['google']) },
+    '/login?error=account_not_linked',
+  ),
+  ['Ya existe una cuenta con ese correo.'],
+  [],
+)
+check(
+  'login/oauth-unknown-code',
+  render(LoginPage, { capabilities: capabilities(true, true, ['google']) }, '/login?error=raro'),
+  ['No pudimos completar el acceso con el proveedor.'],
+  [],
+)
+check(
+  'register/oauth-account-not-linked',
+  render(
+    RegisterPage,
+    { capabilities: capabilities(true, true, ['google']) },
+    '/register?error=account_not_linked',
+  ),
+  ['Ya existe una cuenta con ese correo.'],
+  [],
 )

@@ -20,6 +20,7 @@ Rama: `feat/api-auth-capabilities`. Runners: `pnpm --filter api test` (Vitest + 
 - **S13 — Registro**: mismo patrón. Con `signUpEnabled=false` muestra un mensaje neutro, no un error. En modo solo proveedores explica que el alta ocurre al continuar con un proveedor. No pinta formulario ni botones cuando la acción no es posible.
 - **S14 — Login social**: `POST /api/auth/sign-in/social` con `callbackURL` absoluto y navegación a la `url` devuelta; la sesión se crea en el callback del backend. Un id de proveedor desconocido se muestra con su id crudo en vez de romper la pantalla.
 - **S15 — Tipos, barrel, errores y docs**: tipos del contrato en `features/auth/types`, exports en el barril, traducción de `EMAIL_PASSWORD_DISABLED`, `EMAIL_PASSWORD_SIGN_UP_DISABLED` y `PROVIDER_NOT_FOUND`, y README de `apps/web` con el flujo y los tres modos.
+- **S16 — Errores del callback OAuth**: `SocialButtons` envía `errorCallbackURL` (misma pantalla) para que un fallo del proveedor no acabe en la página de error de la API. `useOAuthCallbackError` captura `?error`, traduce los códigos propios del callback (`account_not_linked`, `email_not_verified`, `email_not_found`, etc.), muestra el aviso en login y registro, y limpia el parámetro de la URL.
 
 ## Tasks
 
@@ -35,6 +36,7 @@ Rama: `feat/api-auth-capabilities`. Runners: `pnpm --filter api test` (Vitest + 
 | T8  | S14        | inline | hecho  | `SocialButtons.tsx` + `AuthDivider.tsx` + `AuthMethodsStatus.tsx`                                       |
 | T9  | S15        | inline | hecho  | barril, `auth-errors.ts`, `apps/web/README.md`                                                          |
 | T10 | S11–S15    | inline | hecho  | `pnpm check` + build OK; probe de composición 12/12; verificador sin bloqueadores                       |
+| T11 | S16        | inline | hecho  | `errorCallbackURL`, `useOAuthCallbackError`, traducciones y 3 casos nuevos del probe (15/15)            |
 
 ## Log
 
@@ -92,3 +94,14 @@ ya hice el push, no hice el merge, ahora haz el frontend.
 - Sí se añadió una prueba de composición sin runner (`scripts/auth-composition.probe.mjs`, `pnpm --filter web test:composition`): renderiza login y registro con Vite SSR y comprueba qué se pinta en 12 escenarios (carga, error, sin métodos, defaults, registro cerrado, solo social, proveedor desconocido). Nació del probe independiente del verificador para cubrir el riesgo de no tener tests.
 - Verificación observada: `pnpm check` → OK (Prettier, ESLint api+web, `tsc -b`); `pnpm --filter web build` → OK (2076 módulos); `pnpm --filter web test:composition` → **12/12**. Sin regresiones en `pnpm --filter api test` (121 tests, no se tocó la API).
 - Verificador independiente: S11–S15 **cumplidos**, sin bloqueadores. Avisos: StrictMode dispara la carga del contrato dos veces en dev (una en build); `SocialButtons` no cancela la navegación si el componente se desmonta con el POST en vuelo; nit del README corregido. Sin ejecución real del round-trip OAuth (no hay navegador/runner).
+
+### L8 — Errores del callback OAuth (verbatim del usuario)
+
+si haz el punto 2, dame una breve analisis de lo hecho, corto y simple.
+
+- Hallazgo: better-auth redirige los fallos del callback a `errorURL`, que por defecto es `${baseURL}/error` (sin `basePath`, es un 404 de la API). El body de `/sign-in/social` acepta `errorCallbackURL`, así que el cliente puede elegir el destino.
+- `SocialButtons` ahora envía `errorCallbackURL = origin + pathname`: el fallo vuelve a `/login` o `/register`, no a la API.
+- `useOAuthCallbackError` captura `?error` una sola vez con `useState` (para que limpiar la URL no borre el aviso), traduce con `oauthErrorMessage` y limpia `error`/`error_description` con `replace`.
+- Códigos traducidos: `account_not_linked`, `email_not_verified`, `email_not_found`, `email_does_not_match`, `account_already_linked_to_different_user`, `unable_to_link_account`, `oauth_provider_not_found`, `invalid_code`, `invalid_callback_request`, `unable_to_get_user_info`, `state_mismatch`, `no_code`; cualquier otro cae en un mensaje genérico.
+- El aviso se muestra en ambas páginas por encima del contenido y se oculta si el contrato aún carga o falló (ese error tiene prioridad).
+- Probe de composición: 15/15 (3 casos nuevos: `account_not_linked` en login y registro, y código desconocido).

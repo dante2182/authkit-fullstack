@@ -28,7 +28,13 @@ export function SocialButtons({ providers, callbackURL }: SocialButtonsProps) {
     setPending(provider)
 
     try {
-      const { url } = await authService.signInSocial({ provider, callbackURL })
+      // Si el callback falla (correo sin verificar, cuenta sin vincular), better-auth
+      // vuelve a esta misma pantalla con `?error=...` en vez de a su página de error.
+      const { url } = await authService.signInSocial({
+        provider,
+        callbackURL,
+        errorCallbackURL: `${window.location.origin}${window.location.pathname}`,
+      })
       // Se sale del SPA: la sesión se crea en el callback del backend.
       window.location.assign(url)
     } catch (signInError) {

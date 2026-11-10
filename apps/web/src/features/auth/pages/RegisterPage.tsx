@@ -13,6 +13,7 @@ import { SubmitButton } from '../components/SubmitButton'
 import { TextField } from '../components/TextField'
 import { useAuth } from '../hooks/use-auth'
 import { useAuthCapabilities } from '../hooks/use-auth-capabilities'
+import { useOAuthCallbackError } from '../hooks/use-oauth-callback-error'
 import { authErrorMessage } from '../lib/auth-errors'
 import { authService } from '../services/auth.service'
 
@@ -35,6 +36,8 @@ export function RegisterPage() {
   // El contrato también decide si se puede crear cuenta: con el registro cerrado
   // no tiene sentido pintar un formulario que la API va a rechazar.
   const { capabilities, isLoading, error, reload } = useAuthCapabilities()
+  // Un fallo del callback OAuth vuelve aquí con `?error=...`.
+  const oauthError = useOAuthCallbackError()
   const navigate = useNavigate()
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -157,6 +160,11 @@ export function RegisterPage() {
         </>
       }
     >
+      {oauthError && !isLoading && !error ? (
+        <div className="mb-4">
+          <Alert variant="error">{oauthError}</Alert>
+        </div>
+      ) : null}
       {content}
     </AuthCard>
   )

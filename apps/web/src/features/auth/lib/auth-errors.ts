@@ -33,3 +33,28 @@ export function linkErrorMessage(code: string | null): string {
   if (code === 'TOKEN_EXPIRED') return 'El enlace ha caducado. Solicita uno nuevo.'
   return 'El enlace no es válido o ya se ha usado.'
 }
+
+// El callback OAuth de better-auth redirige con `?error=<código>`. Son códigos
+// distintos de los de la API: aquí se traducen los que el usuario puede ver.
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  account_not_linked:
+    'Ya existe una cuenta con ese correo. Inicia sesión con tu contraseña y vuelve a intentarlo.',
+  email_not_verified: 'El proveedor no ha verificado tu correo.',
+  email_not_found: 'El proveedor no compartió un correo. Usa otro método de acceso.',
+  email_does_not_match: 'El correo del proveedor no coincide con el de tu cuenta.',
+  account_already_linked_to_different_user: 'Ese proveedor ya está vinculado a otra cuenta.',
+  unable_to_link_account: 'No pudimos vincular el proveedor. Inténtalo de nuevo.',
+  oauth_provider_not_found: 'Ese proveedor no está disponible en este despliegue.',
+  invalid_code: 'La autorización caducó. Vuelve a intentarlo.',
+  invalid_callback_request: 'La respuesta del proveedor no es válida. Vuelve a intentarlo.',
+  unable_to_get_user_info: 'El proveedor no devolvió los datos de tu cuenta.',
+  state_mismatch: 'La sesión de autorización caducó. Vuelve a intentarlo.',
+  no_code: 'El proveedor no completó la autorización. Vuelve a intentarlo.',
+}
+
+export function oauthErrorMessage(code: string): string {
+  return (
+    OAUTH_ERROR_MESSAGES[code] ??
+    'No pudimos completar el acceso con el proveedor. Inténtalo de nuevo.'
+  )
+}

@@ -65,6 +65,8 @@ export interface AuthCapabilities {
 export interface SocialSignInInput {
   provider: string
   callbackURL: string
+  // A dónde vuelve better-auth si el callback falla (p. ej. cuenta sin vincular).
+  errorCallbackURL: string
 }
 
 export interface SocialSignInResponse {

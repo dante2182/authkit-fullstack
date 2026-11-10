@@ -131,6 +131,12 @@ apagado responde `400 EMAIL_PASSWORD_DISABLED` / `400 EMAIL_PASSWORD_SIGN_UP_DIS
 proveedor sin configurar `404 PROVIDER_NOT_FOUND`. Esos códigos están traducidos en
 `lib/auth-errors.ts`.
 
+Si el callback del proveedor falla, better-auth vuelve a la misma pantalla con `?error=<código>`.
+`SocialButtons` envía `errorCallbackURL` para eso; `useOAuthCallbackError` captura el código,
+lo traduce y limpia la URL para que recargar no repita el aviso. El caso típico es
+`account_not_linked`: ya existe una cuenta con ese correo pero no verificó el email, así que
+la vinculación automática se rechaza y hay que entrar con la contraseña y verificar el correo.
+
 Rutas del frontend: `/login`, `/register`, `/forgot-password`, `/reset-password?token=…`,
 `/verify-email`, `/dashboard`, `/account` y `/admin/users` (protegidas). `/` redirige a
 `/dashboard`.
