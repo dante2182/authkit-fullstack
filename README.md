@@ -110,10 +110,11 @@ Dos flags eligen con qué se entra. Los defaults reproducen el comportamiento
 histórico: credenciales activas y registro abierto. Se aplican en el servidor, no
 solo en la UI.
 
-| Variable                      | Default | Qué hace                                                  |
-| ----------------------------- | ------- | --------------------------------------------------------- |
-| `AUTH_EMAIL_PASSWORD_ENABLED` | `true`  | Habilita login y registro con email/contraseña            |
-| `AUTH_SIGN_UP_ENABLED`        | `true`  | Permite crear cuentas nuevas (credenciales y proveedores) |
+| Variable                          | Default | Qué hace                                                  |
+| --------------------------------- | ------- | --------------------------------------------------------- |
+| `AUTH_EMAIL_PASSWORD_ENABLED`     | `true`  | Habilita login y registro con email/contraseña            |
+| `AUTH_SIGN_UP_ENABLED`            | `true`  | Permite crear cuentas nuevas (credenciales y proveedores) |
+| `AUTH_REQUIRE_EMAIL_VERIFICATION` | `false` | Exige verificar el email para entrar con credenciales     |
 
 | Caso                           | Configuración                                             |
 | ------------------------------ | --------------------------------------------------------- |
@@ -185,12 +186,20 @@ prohibido porque permite falsificar la IP y saltarse el rate limit.
 
 ### Exigir email verificado
 
-`requireVerifiedEmail` (`src/modules/auth/auth.middleware.ts`) devuelve `401` sin sesión
-y `403` con código `EMAIL_NOT_VERIFIED` si `emailVerified` es `false`.
+Hay dos mecanismos independientes:
 
-No está aplicado a ninguna ruta existente: un usuario con el email mal escrito debe
-poder borrar su cuenta o recuperar el acceso. Úsalo en rutas nuevas de riesgo, por
-ejemplo cambio de email o acciones de negocio sensibles:
+- **Login con credenciales**: `AUTH_REQUIRE_EMAIL_VERIFICATION=true` activa
+  `emailAndPassword.requireEmailVerification` de better-auth. Un usuario con
+  `emailVerified: false` recibe `403 EMAIL_NOT_VERIFIED` al iniciar sesión y se le
+  reenvía el enlace. El login social no se ve afectado: better-auth lo controla por
+  proveedor (`requireEmailVerification` en cada uno), no con esta variable.
+- **Rutas concretas**: `requireVerifiedEmail` (`src/modules/auth/auth.middleware.ts`)
+  devuelve `401` sin sesión y `403` con código `EMAIL_NOT_VERIFIED` si
+  `emailVerified` es `false`.
+
+`requireVerifiedEmail` no está aplicado a ninguna ruta existente: un usuario con el email
+mal escrito debe poder borrar su cuenta o recuperar el acceso. Úsalo en rutas nuevas de
+riesgo, por ejemplo cambio de email o acciones de negocio sensibles:
 
 ```ts
 router.post('/orders', requireVerifiedEmail, ordersController.create)

@@ -27,6 +27,10 @@ export const auth = betterAuth({
     enabled: env.AUTH_EMAIL_PASSWORD_ENABLED,
     // Registro cerrado: los usuarios existentes siguen entrando con contraseña.
     disableSignUp: !env.AUTH_SIGN_UP_ENABLED,
+    // Con la variable activa, un email sin verificar no puede iniciar sesión
+    // con contraseña (403 EMAIL_NOT_VERIFIED). El login social no se ve
+    // afectado: better-auth lo controla por proveedor.
+    requireEmailVerification: env.AUTH_REQUIRE_EMAIL_VERIFICATION,
     // Un reset de contraseña revoca todas las sesiones abiertas del usuario.
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {

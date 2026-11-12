@@ -36,6 +36,9 @@ export const envSchema = z
     // El registro se cierra con AUTH_SIGN_UP_ENABLED=false (paneles internos).
     AUTH_EMAIL_PASSWORD_ENABLED: optionalBooleanFlag('true'),
     AUTH_SIGN_UP_ENABLED: optionalBooleanFlag('true'),
+    // Exige verificar el email antes de iniciar sesión con credenciales.
+    // Default false: un email mal escrito no debe dejar al usuario sin acceso.
+    AUTH_REQUIRE_EMAIL_VERIFICATION: optionalBooleanFlag('false'),
     // Proveedores sociales. Cada pareja es opcional, pero no se admite media
     // pareja: con solo el client id better-auth falla al construir la URL.
     GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
