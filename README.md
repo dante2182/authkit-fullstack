@@ -74,7 +74,7 @@ del prefijo de la API.
 | POST   | `/api/auth/change-password`         | Cookie | Cambia la contraseña; opcionalmente revoca las otras sesiones      |
 | GET    | `/api/users/me`                     | Cookie | Usuario actual                                                     |
 | PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                          |
-| DELETE | `/api/users/me`                     | Cookie | Borra la cuenta y expira la cookie                                 |
+| DELETE | `/api/users/me`                     | Cookie | Borra la cuenta; exige la contraseña actual y expira la cookie     |
 | GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada (ADMIN verificado)                         |
 | PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                     |
 
