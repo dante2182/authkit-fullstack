@@ -22,6 +22,13 @@ export interface ChangePasswordInput {
   revokeOtherSessions: boolean
 }
 
+// GET /api/auth/list-accounts devuelve las cuentas vinculadas (credenciales y
+// proveedores sociales). Solo se usa `providerId` para saber si hay contraseña.
+export interface LinkedAccount {
+  id: string
+  providerId: string
+}
+
 // better-auth responde con el token nuevo (o null) y el usuario, no con `status`.
 export interface ChangePasswordResponse {
   token: string | null

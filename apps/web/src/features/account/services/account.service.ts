@@ -4,6 +4,7 @@ import type {
   AccountSession,
   ChangePasswordInput,
   ChangePasswordResponse,
+  LinkedAccount,
   PublicUser,
   UpdateProfileInput,
 } from '../types'
@@ -22,6 +23,12 @@ export const accountService = {
 
   listSessions() {
     return request<AccountSession[]>('/auth/list-sessions')
+  },
+
+  // Cuentas vinculadas al usuario. Un usuario solo-OAuth no tiene la cuenta
+  // `credential`, así que no puede cambiar ni confirmar contraseñas.
+  listAccounts() {
+    return request<LinkedAccount[]>('/auth/list-accounts')
   },
 
   // Sin sesión, better-auth responde 200 con null.
