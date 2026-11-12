@@ -38,7 +38,7 @@ Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`
 | F2  | S11    | inline | hecho   | `AccountPage` lee `list-accounts`; build + composición OK                   |
 | F3  | S12    | inline | hecho   | `DeleteAccountSection` + `DELETE /users/me`; build OK                       |
 | F4  | S13    | inline | hecho   | Vitest + MSW: 14/14; `pnpm check` + build + composición + `test:401` OK     |
-| F5  | S14    | inline | pending | —                                                                           |
+| F5  | S14    | inline | hecho   | `ErrorBoundary` + `sonner`; 16/16 tests web; build OK                       |
 | F6  | S15    | inline | pending | —                                                                           |
 | F7  | S15    | inline | pending | —                                                                           |
 | I1  | S16    | inline | pending | —                                                                           |
