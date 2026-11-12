@@ -39,3 +39,9 @@ export interface ChangePasswordResponse {
 export interface DeleteAccountInput {
   password: string
 }
+
+// Cambio de correo en dos pasos: la API manda un enlace al correo ACTUAL y la
+// dirección solo cambia cuando se abre. `callbackURL` se rellena en el servicio.
+export interface ChangeEmailInput {
+  newEmail: string
+}

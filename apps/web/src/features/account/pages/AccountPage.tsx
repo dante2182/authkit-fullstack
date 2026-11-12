@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AppHeader } from '@/components/AppHeader'
+import { ChangeEmailSection } from '../components/ChangeEmailSection'
 import { DeleteAccountSection } from '../components/DeleteAccountSection'
 import { PasswordForm } from '../components/PasswordForm'
 import { ProfileForm } from '../components/ProfileForm'
@@ -44,12 +45,19 @@ export function AccountPage() {
         <section>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Tu cuenta</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Gestiona tu perfil, tu contraseña y las sesiones abiertas.
+            Gestiona tu perfil, tu correo, tu contraseña y las sesiones abiertas.
           </p>
         </section>
 
         <SettingsSection title="Perfil" description="El nombre que se muestra en la aplicación.">
           <ProfileForm />
+        </SettingsSection>
+
+        <SettingsSection
+          title="Correo electrónico"
+          description="El cambio se confirma desde tu correo actual."
+        >
+          <ChangeEmailSection />
         </SettingsSection>
 
         {hasPassword === false ? (

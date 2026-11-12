@@ -2,6 +2,7 @@ import { request } from '@/services/http'
 import type { SessionResponse } from '@/features/auth'
 import type {
   AccountSession,
+  ChangeEmailInput,
   ChangePasswordInput,
   ChangePasswordResponse,
   DeleteAccountInput,
@@ -9,6 +10,10 @@ import type {
   PublicUser,
   UpdateProfileInput,
 } from '../types'
+
+// El enlace de confirmación vuelve a la app por la ruta de verificación, igual
+// que el alta: la API reescribe el callback en el GET.
+const verifyCallback = () => `${window.location.origin}/verify-email`
 
 export const accountService = {
   updateProfile(input: UpdateProfileInput) {
@@ -18,6 +23,15 @@ export const accountService = {
   // Borrado definitivo: el backend exige la contraseña actual y responde 204.
   deleteAccount(input: DeleteAccountInput) {
     return request<void>('/users/me', { method: 'DELETE', body: input })
+  },
+
+  // La API responde `200 { status: true }` siempre, exista o no la dirección
+  // nueva: no se puede enumerar cuentas desde aquí.
+  changeEmail(input: ChangeEmailInput) {
+    return request<{ status: boolean }>('/auth/change-email', {
+      method: 'POST',
+      body: { ...input, callbackURL: verifyCallback() },
+    })
   },
 
   changePassword(input: ChangePasswordInput) {
