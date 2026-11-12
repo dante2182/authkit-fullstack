@@ -6,7 +6,11 @@ import { toNodeHandler } from 'better-auth/node'
 import { auth } from './config/auth.js'
 import { corsOptions } from './config/cors.js'
 import { env } from './config/env.js'
-import { authRateLimit, sensitiveIpRateLimit } from './config/rate-limit.js'
+import {
+  authRateLimit,
+  sensitiveEmailRateLimit,
+  sensitiveIpRateLimit,
+} from './config/rate-limit.js'
 import { healthRouter } from './modules/health/health.routes.js'
 import { router } from './routes/index.js'
 import { errorHandler } from './shared/errors/error-handler.js'
@@ -73,9 +77,28 @@ app.use('/api/auth/reset-password', forceCallbackURL(`${env.CORS_ORIGIN}/reset-p
 // Rutas nativas: /sign-up/email, /sign-in/email, /sign-out, /get-session,
 // /callback/:provider, /request-password-reset, /reset-password, etc.
 app.use('/api/auth', authRateLimit)
-app.use('/api/auth/request-password-reset', sensitiveIpRateLimit)
-app.use('/api/auth/reset-password', sensitiveIpRateLimit)
-app.use('/api/auth/send-verification-email', sensitiveIpRateLimit)
+// El límite por email necesita el cuerpo parseado. better-call reutiliza
+// `req.body` cuando el stream ya se consumió, así que el handler nativo sigue
+// recibiendo el mismo JSON. Se monta por ruta para no tocar el resto de /auth.
+const parseSensitiveBody = express.json()
+app.use(
+  '/api/auth/request-password-reset',
+  parseSensitiveBody,
+  sensitiveIpRateLimit,
+  sensitiveEmailRateLimit,
+)
+app.use(
+  '/api/auth/reset-password',
+  parseSensitiveBody,
+  sensitiveIpRateLimit,
+  sensitiveEmailRateLimit,
+)
+app.use(
+  '/api/auth/send-verification-email',
+  parseSensitiveBody,
+  sensitiveIpRateLimit,
+  sensitiveEmailRateLimit,
+)
 app.all('/api/auth/*splat', toNodeHandler(auth))
 
 app.use(express.json())

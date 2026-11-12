@@ -27,7 +27,7 @@ Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`
 | ID  | Specs  | Route  | Status  | Evidence                                                            |
 | --- | ------ | ------ | ------- | ------------------------------------------------------------------- |
 | B1  | S1, S2 | inline | hecho   | `account-linking.test.ts` 5/5 (RED config → GREEN); `pnpm check` OK |
-| B2  | S3     | inline | pending | —                                                                   |
+| B2  | S3     | inline | hecho   | `sensitive-rate-limit.test.ts` 5/5 (+3 nuevos); `pnpm check` OK     |
 | B3  | S4     | inline | pending | —                                                                   |
 | B4  | S5     | inline | pending | —                                                                   |
 | B5  | S6     | inline | pending | —                                                                   |

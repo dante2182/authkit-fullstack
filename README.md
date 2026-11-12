@@ -297,8 +297,10 @@ Para añadir un **permiso** nuevo: agrégalo a `PERMISSIONS`, concédelo en
 `/auth` tiene un límite general (100 peticiones/minuto). Los endpoints sensibles
 (`forgot-password`, `reset-password`, `send-verification-email`) tienen además un límite
 estricto por IP y por email: `SENSITIVE_RATE_LIMIT_MAX` (default 5) cada
-`SENSITIVE_RATE_LIMIT_WINDOW_MINUTES` (default 15). Se puede desactivar con
-`SENSITIVE_RATE_LIMIT_ENABLED=false`.
+`SENSITIVE_RATE_LIMIT_WINDOW_MINUTES` (default 15). El email se normaliza (minúsculas y
+sin espacios) y se cuenta antes de consultar la base, así que la respuesta es idéntica
+exista o no el usuario y el límite no sirve para enumerar cuentas. Se puede desactivar
+con `SENSITIVE_RATE_LIMIT_ENABLED=false`.
 
 ### Migraciones
 
