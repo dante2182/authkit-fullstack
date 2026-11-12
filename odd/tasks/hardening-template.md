@@ -1,6 +1,6 @@
 # Feature: hardening de la plantilla AuthKit (backend, frontend e infra)
 
-Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check` + `pnpm --filter api test`.
+Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`, `pnpm build`, `pnpm --filter api test`, `pnpm --filter web test`.
 
 ## Specs
 
@@ -102,3 +102,26 @@ Empieza solo con B1 y detente a preguntarme.
 - better-auth 1.7.11: `account.accountLinking` admite `enabled`, `disableImplicitLinking`, `trustedProviders`, `allowDifferentEmails`, `requireLocalEmailVerified` (deprecado, default `true`).
 - `trustedProviders` NO exige verificación: mejor-auth vincula un proveedor confiable aunque el IdP no confirme el email (`link-account.mjs:137-139`). Dejarlo vacío mantiene `email_verified` obligatorio.
 - La puerta real vive en `handleOAuthUserInfo`, exportado desde `better-auth/oauth2`, y usa `c.context`; es testeable con la instancia real y la base de test.
+
+### L3 — Instrucción posterior: sin pausas
+
+> haz todos, y en cada uno un commit y cuando termines todo un push
+
+Con eso se levanta la regla 2 de L1 (preguntar tras cada tarea): se ejecutan todas, un commit
+por tarea, y un único push al final.
+
+### L4 — Evidencia de cierre (frontend e infra)
+
+- MSW 3 renombró la opción de arranque: `onUnhandledRequest` → `onUnhandledFrame`. Verificado
+  en el tipo instalado (`msw@3.0.5`, `lib/_chunks/shared-options.d.ts`); con el nombre antiguo
+  `tsc -b` falla aunque los tests corran.
+- MSW resuelve handlers con el último registrado: un `server.use` del test puesto antes de
+  `renderX()` queda tapado por los handlers por defecto que registra el helper de render. En
+  `LoginPage.test.tsx` el cuerpo enviado se verifica con un callback `onSignIn` en vez de
+  duplicar el handler.
+- jsdom fija el origen en `http://localhost:3000`; los tests no deben afirmar el host de
+  `callbackURL`, solo la ruta (`/verify-email`).
+- Resend: un `from` de dominio no verificado responde `403 The domain is not verified`
+  (documentado en `resend.com/docs/api-reference/errors`). De ahí la nota de D1.
+- Verificación final: `pnpm check` OK; `pnpm build` OK (api + web); api 153/153; web 20/20;
+  `test:composition` 15 casos, 0 fallos; `test:401` 6 comprobaciones, 0 fallos.
