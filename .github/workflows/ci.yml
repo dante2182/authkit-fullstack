@@ -42,3 +42,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+
+      # El build es el único paso que valida el bundling del frontend y el
+      # `tsc` de emit de la API: sin él, un import roto solo se ve al desplegar.
+      - run: pnpm build

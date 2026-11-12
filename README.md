@@ -386,9 +386,14 @@ pnpm --filter api test:watch  # modo watch
   sesiones expiradas, permisos y roles (anti-escalada, paginación, último admin,
   revocación de sesiones y frescura del rol sin `cookieCache`).
 
-CI: `.github/workflows/ci.yml` ejecuta `format:check`, `lint`, `typecheck` y `test` en
-cada push a `main` y en cada pull request. Arranca el PostgreSQL que ya trae el runner,
-sin contenedores.
+CI: `.github/workflows/ci.yml` ejecuta `format:check`, `lint`, `typecheck`, `test` y
+`build` en cada push a `main` y en cada pull request. Arranca el PostgreSQL que ya trae el
+runner, sin contenedores. `build` es el único paso que valida el bundling del frontend y el
+emit de TypeScript de la API.
+
+Dependabot (`.github/dependabot.yml`) abre cada lunes un PR con las actualizaciones minor y
+patch agrupadas, y PRs sueltos para los majors, que exigen migración a mano. También vigila
+las versiones de las GitHub Actions.
 
 ## Comandos (raíz)
 

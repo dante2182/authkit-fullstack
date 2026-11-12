@@ -41,8 +41,8 @@ Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`
 | F5  | S14    | inline | hecho   | `ErrorBoundary` + `sonner`; 16/16 tests web; build OK                       |
 | F6  | S15    | inline | hecho   | buscador por email en admin; 18/18 tests web; build OK                      |
 | F7  | S15    | inline | hecho   | `ChangeEmailSection` + `POST /auth/change-email`; 20/20 tests web           |
-| I1  | S16    | inline | pending | —                                                                           |
-| I2  | S16    | inline | pending | —                                                                           |
+| I1  | S16    | inline | hecho   | `.github/workflows/ci.yml` corre `pnpm build` tras `test`                   |
+| I2  | S16    | inline | hecho   | `.github/dependabot.yml`: npm + github-actions, minor/patch agrupados       |
 | D1  | S17    | inline | pending | —                                                                           |
 
 ## Log
