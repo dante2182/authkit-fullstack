@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { Alert, PasswordField, authErrorMessage, useAuth } from '@/features/auth'
 import { accountService } from '../services/account.service'
 
@@ -37,6 +38,8 @@ export function DeleteAccountSection() {
       // La cuenta y sus sesiones ya no existen: signOut solo limpia el estado
       // local y expira la cookie que el backend invalidó.
       await signOut()
+      // El toast se monta fuera del router, así que sobrevive a la navegación.
+      toast.success('Tu cuenta se ha borrado.')
       navigate('/login', { replace: true })
     } catch (error) {
       setFormError(authErrorMessage(error))

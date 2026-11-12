@@ -51,7 +51,7 @@ nueva requiere declararla ahí para tener autocompletado.
 ```
 src/
 ├─ app/
-│  ├─ App.tsx           # providers + RouterProvider
+│  ├─ App.tsx           # ErrorBoundary + providers + RouterProvider + Toaster
 │  ├─ router.tsx        # rutas y guards
 │  └─ NotFoundPage.tsx
 ├─ features/
@@ -82,7 +82,8 @@ src/
 │  └─ dashboard/
 │     └─ pages/         # destino protegido de ejemplo
 ├─ components/
-│  └─ AppHeader.tsx     # cabecera compartida de páginas privadas
+│  ├─ AppHeader.tsx     # cabecera compartida de páginas privadas
+│  └─ ErrorBoundary.tsx # fallback de render para toda la app
 ├─ lib/cn.ts            # helper de clases CSS
 ├─ services/http.ts     # cliente HTTP único (cookie httpOnly)
 ├─ types/api.ts
@@ -93,6 +94,16 @@ src/
 
 Las features solo se importan desde fuera por su barril (`@/features/auth`); dentro usan rutas
 relativas. El **React Compiler** está activado vía `babel-plugin-react-compiler` en `vite.config.ts`.
+
+## Errores y avisos
+
+`ErrorBoundary` envuelve toda la app: si un componente falla al renderizar, aparece una pantalla
+con un botón de recarga en vez de un árbol vacío. Solo cubre errores de render; los de red los
+gestiona cada pantalla con su estado de error.
+
+Los avisos que deben sobrevivir a una navegación (por ejemplo, el de cuenta borrada) usan
+`sonner`. El `<Toaster />` vive en `App.tsx`, fuera del router, para no desmontarse al cambiar
+de ruta.
 
 ## Autenticación
 
