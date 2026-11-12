@@ -1,0 +1,31 @@
+version: 2
+
+updates:
+  # Un solo lockfile en la raíz: pnpm resuelve también apps/api y apps/web.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Minor y patch en un PR: llegan juntos y se revisan de una vez.
+      # Los majors van sueltos porque necesitan migración.
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+      include: scope
