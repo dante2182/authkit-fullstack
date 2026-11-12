@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AppHeader } from '@/components/AppHeader'
+import { DeleteAccountSection } from '../components/DeleteAccountSection'
 import { PasswordForm } from '../components/PasswordForm'
 import { ProfileForm } from '../components/ProfileForm'
 import { SessionsList } from '../components/SessionsList'
@@ -78,6 +79,24 @@ export function AccountPage() {
         >
           <SessionsList key={sessionsVersion} />
         </SettingsSection>
+
+        {hasPassword === false ? (
+          <SettingsSection
+            title="Zona de peligro"
+            description="Borrar la cuenta requiere una contraseña y esta cuenta no tiene."
+          >
+            <p className="text-sm text-slate-500">
+              Las cuentas que entran solo con proveedores sociales no pueden borrarse desde aquí.
+            </p>
+          </SettingsSection>
+        ) : hasPassword ? (
+          <SettingsSection
+            title="Zona de peligro"
+            description="Acciones irreversibles sobre tu cuenta."
+          >
+            <DeleteAccountSection />
+          </SettingsSection>
+        ) : null}
       </main>
     </div>
   )

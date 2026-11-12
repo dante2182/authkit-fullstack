@@ -157,6 +157,7 @@ Rutas del frontend: `/login`, `/register`, `/forgot-password`, `/reset-password?
 | Pantalla           | Endpoint                               |
 | ------------------ | -------------------------------------- |
 | Editar perfil      | `PATCH /api/users/me`                  |
+| Borrar la cuenta   | `DELETE /api/users/me`                 |
 | Cuentas vinculadas | `GET /api/auth/list-accounts`          |
 | Cambiar contraseña | `POST /api/auth/change-password`       |
 | Listar sesiones    | `GET /api/auth/list-sessions`          |
@@ -172,6 +173,11 @@ La sesión actual se identifica comparando el `token` de `list-sessions` con el 
 `get-session`; el token no se guarda en el navegador. La sesión actual no se revoca
 desde la lista: para eso está el logout. Al cambiar la contraseña con
 `revokeOtherSessions`, la API emite una cookie nueva y la UI relee la sesión.
+
+La "Zona de peligro" borra la cuenta con `DELETE /api/users/me`. El backend exige la
+contraseña actual (re-autenticación) y responde `204`; después la UI limpia la sesión local y
+vuelve a `/login`. Las cuentas solo-OAuth no ven el formulario: no tienen contraseña que
+confirmar.
 
 ## Administración
 
