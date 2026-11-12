@@ -10,12 +10,30 @@ pnpm build        # typecheck (tsc -b) + build de producción
 pnpm preview      # sirve el build de dist/
 pnpm lint         # ESLint (flat config)
 pnpm lint:fix     # ESLint con --fix
+pnpm test         # Vitest (jsdom + Testing Library + MSW)
+pnpm test:watch   # Vitest en modo watch
 pnpm test:composition  # renderiza login/registro por modo y comprueba qué pinta
+pnpm test:401     # comprueba a mano el manejo global de la sesión caducada
 pnpm typecheck    # solo TypeScript, sin emitir
 ```
 
 Desde la raíz del monorepo: `pnpm --filter web <comando>`.
 El formato se ejecuta siempre desde la raíz (`pnpm format` / `pnpm format:check`), no por app.
+
+## Tests
+
+`vitest.config.ts` (separado de `vite.config.ts`) arranca jsdom con
+`src/test/setup.ts`. MSW intercepta `fetch` a nivel de proceso con
+`onUnhandledFrame: 'error'`: una petición sin handler falla el test en vez de
+llegar a una API real. Cada test declara sus handlers con `server.use` y
+`server.resetHandlers()` los limpia tras cada caso.
+
+Los tests de páginas usan los providers reales (`AuthProvider`,
+`AuthCapabilitiesProvider`) y resuelven sesión y capacidades por red, no con
+contextos inyectados: si el contrato cambia, el test lo nota.
+
+Las importaciones entre features pasan por el barril (`@/features/auth`); dentro
+de la misma feature se usan rutas relativas. Es la misma regla que aplica ESLint.
 
 ## Variables de entorno
 
