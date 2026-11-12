@@ -145,10 +145,15 @@ sin sesión y sin el rate limit de `/auth`):
 }
 ```
 
-**Account linking**: se mantiene el comportamiento por defecto de better-auth (un
-login social con el mismo email puede vincularse a la cuenta existente). Este
-contrato no lo cambia; si un proyecto derivado quiere exigir vinculación explícita,
-se configura `account.accountLinking` en `src/config/auth.ts`.
+**Account linking**: la vinculación implícita solo se acepta cuando el proveedor
+confirma que el email está verificado **y** la cuenta local ya tiene
+`emailVerified`. `account.accountLinking.trustedProviders` se deja vacío a
+propósito: better-auth trata un proveedor "confiable" como prueba suficiente
+aunque el IdP no confirme el email, y eso permitiría apropiarse de una cuenta
+pre-registrada. `allowDifferentEmails` también queda en `false`: vincular un
+email distinto exige una acción explícita del usuario autenticado. Cualquier
+otro caso se rechaza con `account_not_linked` y no crea filas en `Account`.
+Cubierto por `src/modules/auth/account-linking.test.ts`.
 
 ### Trust proxy
 

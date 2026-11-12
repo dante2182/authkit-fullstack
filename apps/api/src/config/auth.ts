@@ -42,6 +42,20 @@ export const auth = betterAuth({
       sendEmailInBackground(verificationEmail({ to: user.email, name: user.name }, url))
     },
   },
+  // Account linking: better-auth solo vincula implícitamente cuando el
+  // proveedor confirma `email_verified` y la cuenta local ya está verificada
+  // (`requireLocalEmailVerified` vale true por defecto y pasará a ser
+  // incondicional). `trustedProviders` se deja vacío a propósito: un proveedor
+  // listado ahí se vincularía aunque el IdP no confirme el email, que es justo
+  // el bypass que queremos evitar. Los únicos proveedores posibles son los
+  // configurados en `socialProviders`.
+  account: {
+    accountLinking: {
+      enabled: true,
+      allowDifferentEmails: false,
+      trustedProviders: [],
+    },
+  },
   // Cada proveedor se registra solo con su pareja completa de credenciales.
   socialProviders: buildSocialProvidersConfig(),
   user: {
