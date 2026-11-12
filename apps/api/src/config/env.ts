@@ -73,6 +73,11 @@ export const envSchema = z
     SENSITIVE_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),
     SENSITIVE_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
     SENSITIVE_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
+    // Rate limit general de las rutas de negocio (/users y /admin). Más holgado
+    // que el de auth: frena el abuso sin estorbar el uso normal de la UI.
+    API_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),
+    API_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
+    API_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(1),
     // Email transaccional con Resend. Sin clave, en desarrollo se imprime el correo
     // en consola en vez de enviarlo; en producción es obligatoria.
     RESEND_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),

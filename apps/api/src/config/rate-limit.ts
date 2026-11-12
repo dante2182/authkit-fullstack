@@ -59,3 +59,19 @@ export const sensitiveEmailRateLimit = rateLimit({
   // La clave es el email, no la IP: se declara para no disparar el aviso.
   validate: { keyGeneratorIpFallback: false },
 })
+
+// Límite general de las rutas de negocio. Cada prefijo recibe su propia
+// instancia para que el consumo de /users no gaste el cubo de /admin.
+function createApiRateLimit() {
+  return rateLimit({
+    windowMs: env.API_RATE_LIMIT_WINDOW_MINUTES * 60_000,
+    limit: env.API_RATE_LIMIT_MAX,
+    skip: () => !env.API_RATE_LIMIT_ENABLED,
+    standardHeaders: 'draft-8' as const,
+    legacyHeaders: false,
+    message: rateLimitMessage,
+  })
+}
+
+export const usersRateLimit = createApiRateLimit()
+export const adminRateLimit = createApiRateLimit()

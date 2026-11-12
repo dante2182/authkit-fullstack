@@ -315,6 +315,12 @@ sin espacios) y se cuenta antes de consultar la base, así que la respuesta es i
 exista o no el usuario y el límite no sirve para enumerar cuentas. Se puede desactivar
 con `SENSITIVE_RATE_LIMIT_ENABLED=false`.
 
+Las rutas de negocio (`/api/users/*` y `/api/admin/*`) tienen su propio límite general:
+`API_RATE_LIMIT_MAX` (default 300) cada `API_RATE_LIMIT_WINDOW_MINUTES` (default 1).
+Cada prefijo usa un cubo independiente y se cuenta antes de comprobar la sesión, así que
+las peticiones sin autenticar también consumen cuota. Se desactiva con
+`API_RATE_LIMIT_ENABLED=false` (en test está desactivado por defecto).
+
 ### Migraciones
 
 En producción se usa siempre `prisma migrate deploy`, nunca `migrate dev`:
@@ -353,7 +359,8 @@ pnpm --filter api test:watch  # modo watch
   `migrate dev`). Cada test limpia las tablas con `TRUNCATE`.
 - El rate limit general de `/auth` se desactiva cuando `NODE_ENV=test`. El límite
   estricto de endpoints sensibles también, salvo que el test lo active con
-  `SENSITIVE_RATE_LIMIT_ENABLED=true`.
+  `SENSITIVE_RATE_LIMIT_ENABLED=true`. El límite de `/api/users` y `/api/admin` sigue
+  la misma regla con `API_RATE_LIMIT_ENABLED=true`.
 - Cobertura: registro (cookie httpOnly, sin `token` en el body), acceso protegido solo
   con esa cookie, login, logout (con y sin cookie), cookie falsificada, sesión
   expirada, `GET/PATCH/DELETE /api/users/me`, validaciones de entrada, limpieza de

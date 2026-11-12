@@ -7,9 +7,11 @@ import { auth } from './config/auth.js'
 import { corsOptions } from './config/cors.js'
 import { env } from './config/env.js'
 import {
+  adminRateLimit,
   authRateLimit,
   sensitiveEmailRateLimit,
   sensitiveIpRateLimit,
+  usersRateLimit,
 } from './config/rate-limit.js'
 import { healthRouter } from './modules/health/health.routes.js'
 import { router } from './routes/index.js'
@@ -105,6 +107,11 @@ app.use(express.json())
 
 // Sonda de infraestructura fuera de /api: el balanceador no debe depender del prefijo público.
 app.use('/health', healthRouter)
+
+// Límite general de negocio. Se monta antes del router para contar también las
+// peticiones sin sesión: si no, un atacante podría inundar los 401 gratis.
+app.use('/api/users', usersRateLimit)
+app.use('/api/admin', adminRateLimit)
 
 app.use('/api', router)
 app.use(notFoundHandler)

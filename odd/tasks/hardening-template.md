@@ -31,7 +31,7 @@ Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`
 | B3  | S4     | inline | hecho   | `require-email-verification-env.test.ts` 3/3; `pnpm check` OK       |
 | B4  | S5     | inline | hecho   | `session-config.test.ts` 3/3; `pnpm check` OK                       |
 | B5  | S6     | inline | hecho   | `users.test.ts` 8/8 (+2 nuevos); `pnpm check` OK                    |
-| B6  | S7     | inline | pending | —                                                                   |
+| B6  | S7     | inline | hecho   | `api-rate-limit.test.ts` 3/3; `pnpm check` OK                       |
 | B7  | S8     | inline | pending | —                                                                   |
 | B8  | S9     | inline | pending | —                                                                   |
 | F1  | S10    | inline | pending | —                                                                   |
