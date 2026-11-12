@@ -46,6 +46,13 @@ export const auth = betterAuth({
       sendEmailInBackground(verificationEmail({ to: user.email, name: user.name }, url))
     },
   },
+  // Duración de la sesión en segundos. `updateAge` renueva la expiración
+  // cuando la sesión se usa pasado ese tiempo. Valores por env para ajustar
+  // la política sin tocar código.
+  session: {
+    expiresIn: env.SESSION_EXPIRES_IN,
+    updateAge: env.SESSION_UPDATE_AGE,
+  },
   // Account linking: better-auth solo vincula implícitamente cuando el
   // proveedor confirma `email_verified` y la cuenta local ya está verificada
   // (`requireLocalEmailVerified` vale true por defecto y pasará a ser

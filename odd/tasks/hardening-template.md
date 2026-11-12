@@ -29,7 +29,7 @@ Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`
 | B1  | S1, S2 | inline | hecho   | `account-linking.test.ts` 5/5 (RED config → GREEN); `pnpm check` OK |
 | B2  | S3     | inline | hecho   | `sensitive-rate-limit.test.ts` 5/5 (+3 nuevos); `pnpm check` OK     |
 | B3  | S4     | inline | hecho   | `require-email-verification-env.test.ts` 3/3; `pnpm check` OK       |
-| B4  | S5     | inline | pending | —                                                                   |
+| B4  | S5     | inline | hecho   | `session-config.test.ts` 3/3; `pnpm check` OK                       |
 | B5  | S6     | inline | pending | —                                                                   |
 | B6  | S7     | inline | pending | —                                                                   |
 | B7  | S8     | inline | pending | —                                                                   |

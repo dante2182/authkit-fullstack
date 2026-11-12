@@ -20,6 +20,10 @@ const booleanFlag = (defaultValue: 'true' | 'false') =>
 const optionalBooleanFlag = (defaultValue: 'true' | 'false') =>
   z.preprocess(emptyToUndefined, booleanFlag(defaultValue))
 
+// Entero positivo donde `VAR=` vacío equivale a ausente (toma el default).
+const optionalPositiveInt = (defaultValue: number) =>
+  z.preprocess(emptyToUndefined, z.coerce.number().int().positive().default(defaultValue))
+
 // Esquema único: valida y tipa el entorno antes de arrancar.
 export const envSchema = z
   .object({
@@ -53,6 +57,10 @@ export const envSchema = z
     TRUST_PROXY: z.string().default('false'),
     // Minutos entre limpiezas de sesiones expiradas (default: 1 día).
     SESSION_CLEANUP_INTERVAL_MINUTES: z.coerce.number().int().positive().default(1440),
+    // Duración de la sesión y frecuencia de renovación, en segundos.
+    // Defaults de better-auth: 7 días de vida y renovación cada día.
+    SESSION_EXPIRES_IN: optionalPositiveInt(604800),
+    SESSION_UPDATE_AGE: optionalPositiveInt(86400),
     // Nivel de logs de pino. En test se silencia para no ensuciar la salida.
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])

@@ -207,6 +207,10 @@ router.post('/orders', requireVerifiedEmail, ordersController.create)
 
 ### Gestión de sesiones
 
+La vida de la sesión se ajusta sin tocar código: `SESSION_EXPIRES_IN` (segundos,
+default `604800` = 7 días) y `SESSION_UPDATE_AGE` (segundos, default `86400` = 1 día;
+pasado ese tiempo, la sesión se renueva al usarla). Una variable vacía toma el default.
+
 Los endpoints son los nativos de better-auth:
 
 - `GET /api/auth/list-sessions` devuelve un array con las sesiones activas. Al ser el
