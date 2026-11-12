@@ -10,12 +10,30 @@ pnpm build        # typecheck (tsc -b) + build de producción
 pnpm preview      # sirve el build de dist/
 pnpm lint         # ESLint (flat config)
 pnpm lint:fix     # ESLint con --fix
+pnpm test         # Vitest (jsdom + Testing Library + MSW)
+pnpm test:watch   # Vitest en modo watch
 pnpm test:composition  # renderiza login/registro por modo y comprueba qué pinta
+pnpm test:401     # comprueba a mano el manejo global de la sesión caducada
 pnpm typecheck    # solo TypeScript, sin emitir
 ```
 
 Desde la raíz del monorepo: `pnpm --filter web <comando>`.
 El formato se ejecuta siempre desde la raíz (`pnpm format` / `pnpm format:check`), no por app.
+
+## Tests
+
+`vitest.config.ts` (separado de `vite.config.ts`) arranca jsdom con
+`src/test/setup.ts`. MSW intercepta `fetch` a nivel de proceso con
+`onUnhandledFrame: 'error'`: una petición sin handler falla el test en vez de
+llegar a una API real. Cada test declara sus handlers con `server.use` y
+`server.resetHandlers()` los limpia tras cada caso.
+
+Los tests de páginas usan los providers reales (`AuthProvider`,
+`AuthCapabilitiesProvider`) y resuelven sesión y capacidades por red, no con
+contextos inyectados: si el contrato cambia, el test lo nota.
+
+Las importaciones entre features pasan por el barril (`@/features/auth`); dentro
+de la misma feature se usan rutas relativas. Es la misma regla que aplica ESLint.
 
 ## Variables de entorno
 
@@ -33,7 +51,7 @@ nueva requiere declararla ahí para tener autocompletado.
 ```
 src/
 ├─ app/
-│  ├─ App.tsx           # providers + RouterProvider
+│  ├─ App.tsx           # ErrorBoundary + providers + RouterProvider + Toaster
 │  ├─ router.tsx        # rutas y guards
 │  └─ NotFoundPage.tsx
 ├─ features/
@@ -64,7 +82,8 @@ src/
 │  └─ dashboard/
 │     └─ pages/         # destino protegido de ejemplo
 ├─ components/
-│  └─ AppHeader.tsx     # cabecera compartida de páginas privadas
+│  ├─ AppHeader.tsx     # cabecera compartida de páginas privadas
+│  └─ ErrorBoundary.tsx # fallback de render para toda la app
 ├─ lib/cn.ts            # helper de clases CSS
 ├─ services/http.ts     # cliente HTTP único (cookie httpOnly)
 ├─ types/api.ts
@@ -75,6 +94,16 @@ src/
 
 Las features solo se importan desde fuera por su barril (`@/features/auth`); dentro usan rutas
 relativas. El **React Compiler** está activado vía `babel-plugin-react-compiler` en `vite.config.ts`.
+
+## Errores y avisos
+
+`ErrorBoundary` envuelve toda la app: si un componente falla al renderizar, aparece una pantalla
+con un botón de recarga en vez de un árbol vacío. Solo cubre errores de render; los de red los
+gestiona cada pantalla con su estado de error.
+
+Los avisos que deben sobrevivir a una navegación (por ejemplo, el de cuenta borrada) usan
+`sonner`. El `<Toaster />` vive en `App.tsx`, fuera del router, para no desmontarse al cambiar
+de ruta.
 
 ## Autenticación
 
@@ -97,6 +126,15 @@ con `null` cuando no hay sesión.
 
 La sesión vive en una cookie `httpOnly`: el cliente usa `credentials: 'include'` y nunca guarda
 tokens en el navegador.
+
+### Sesión caducada (401)
+
+`request` (`src/services/http.ts`) emite `authkit:unauthorized` cuando una petición autenticada
+recibe `401`. `AuthProvider` escucha el evento, limpia el usuario y `ProtectedRoute` redirige a
+`/login` guardando el destino original en `state.from`.
+
+El login con contraseña incorrecta **no** dispara el evento: `/auth/sign-in/email` está en la
+lista de respuestas de negocio. Cualquier otro `401` de la API se trata como sesión inválida.
 
 ### Métodos de acceso
 
@@ -148,31 +186,52 @@ Rutas del frontend: `/login`, `/register`, `/forgot-password`, `/reset-password?
 | Pantalla           | Endpoint                               |
 | ------------------ | -------------------------------------- |
 | Editar perfil      | `PATCH /api/users/me`                  |
+| Borrar la cuenta   | `DELETE /api/users/me`                 |
+| Cambiar correo     | `POST /api/auth/change-email`          |
+| Cuentas vinculadas | `GET /api/auth/list-accounts`          |
 | Cambiar contraseña | `POST /api/auth/change-password`       |
 | Listar sesiones    | `GET /api/auth/list-sessions`          |
 | Sesión actual      | `GET /api/auth/get-session`            |
 | Revocar una sesión | `POST /api/auth/revoke-session`        |
 | Revocar las demás  | `POST /api/auth/revoke-other-sessions` |
 
+El bloque de contraseña depende de `list-accounts`: si no hay una cuenta con
+`providerId: "credential"`, el usuario entra solo con proveedores sociales y el formulario se
+sustituye por una nota. Si la comprobación falla, se muestra el formulario igualmente.
+
 La sesión actual se identifica comparando el `token` de `list-sessions` con el de
 `get-session`; el token no se guarda en el navegador. La sesión actual no se revoca
 desde la lista: para eso está el logout. Al cambiar la contraseña con
 `revokeOtherSessions`, la API emite una cookie nueva y la UI relee la sesión.
 
+La "Zona de peligro" borra la cuenta con `DELETE /api/users/me`. El backend exige la
+contraseña actual (re-autenticación) y responde `204`; después la UI limpia la sesión local y
+vuelve a `/login`. Las cuentas solo-OAuth no ven el formulario: no tienen contraseña que
+confirmar.
+
+Cambiar de correo es un flujo de dos pasos: `POST /api/auth/change-email` envía un enlace al
+correo **actual** y la dirección solo cambia al abrirlo (el enlace aterriza en `/verify-email`).
+La UI muestra siempre el mismo aviso, exista o no la dirección nueva, porque la API responde
+`200 { status: true }` en ambos casos.
+
 ## Administración
 
 `/admin/users` consume el módulo admin de la API:
 
-| Pantalla        | Endpoint                          |
-| --------------- | --------------------------------- |
-| Listar usuarios | `GET /api/admin/users?page&limit` |
-| Cambiar rol     | `PATCH /api/admin/users/:id/role` |
+| Pantalla        | Endpoint                                |
+| --------------- | --------------------------------------- |
+| Listar usuarios | `GET /api/admin/users?page&limit&email` |
+| Cambiar rol     | `PATCH /api/admin/users/:id/role`       |
 
 `AdminRoute` exige sesión, rol `ADMIN` y email verificado; la autorización real la
 impone la API (`requireAuth → requireVerifiedEmail → requirePermission`). La tabla
 muestra solo campos públicos y nunca datos de `Account`. El selector de rol pide
 confirmación y refleja los errores de negocio de la API (último administrador,
 auto-degradación, permisos insuficientes).
+
+El buscador envía `email` como filtro parcial (`contains`, sin distinguir mayúsculas) y
+solo al pulsar "Buscar": escribir no lanza una petición por pulsación. Al filtrar se vuelve
+a la página 1, porque la paginación anterior deja de aplicar. "Limpiar" quita el filtro.
 
 La API redirige los enlaces de correo a `CORS_ORIGIN/reset-password` y `CORS_ORIGIN/verify-email`,
 así que `CORS_ORIGIN` en `apps/api/.env` debe coincidir con la URL del frontend.

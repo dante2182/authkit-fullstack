@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { ApiError } from '@/services/http'
+import { ApiError, UNAUTHORIZED_EVENT } from '@/services/http'
 import { AuthContext } from '../context/auth-context'
 import { authService } from '../services/auth.service'
 import type { AuthUser } from '../types'
@@ -76,6 +76,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null)
     }
+  }, [])
+
+  // Sesión invalidada desde fuera (caducada o revocada en otra pestaña): el
+  // cliente HTTP avisa y aquí se limpia el usuario. No hace falta llamar al
+  // backend: la cookie ya no sirve. ProtectedRoute se ocupa de la redirección.
+  useEffect(() => {
+    const handleUnauthorized = () => setUser(null)
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
   }, [])
 
   return (

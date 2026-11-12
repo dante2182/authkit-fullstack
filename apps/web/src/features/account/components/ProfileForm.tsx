@@ -64,11 +64,6 @@ export function ProfileForm() {
         {...register('name')}
       />
 
-      <p className="text-xs text-slate-500">
-        El correo no se puede cambiar desde aquí:{' '}
-        <span className="text-slate-700">{user?.email}</span>
-      </p>
-
       <SubmitButton isPending={isSubmitting}>Guardar cambios</SubmitButton>
     </form>
   )

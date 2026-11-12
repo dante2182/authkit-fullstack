@@ -2,8 +2,10 @@ import { request } from '@/services/http'
 import type { AdminUsersResponse, ChangeRoleResponse, UserRole } from '../types'
 
 export const adminService = {
-  listUsers({ page, limit }: { page: number; limit: number }) {
+  // `email` es opcional: vacío no filtra. La API ya normaliza espacios.
+  listUsers({ page, limit, email }: { page: number; limit: number; email?: string }) {
     const query = new URLSearchParams({ page: String(page), limit: String(limit) })
+    if (email) query.set('email', email)
     return request<AdminUsersResponse>(`/admin/users?${query.toString()}`)
   },
 

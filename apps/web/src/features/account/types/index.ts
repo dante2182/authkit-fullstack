@@ -22,8 +22,26 @@ export interface ChangePasswordInput {
   revokeOtherSessions: boolean
 }
 
+// GET /api/auth/list-accounts devuelve las cuentas vinculadas (credenciales y
+// proveedores sociales). Solo se usa `providerId` para saber si hay contraseña.
+export interface LinkedAccount {
+  id: string
+  providerId: string
+}
+
 // better-auth responde con el token nuevo (o null) y el usuario, no con `status`.
 export interface ChangePasswordResponse {
   token: string | null
   user: AuthUser
+}
+
+// DELETE /api/users/me exige re-autenticación: la sesión sola no basta.
+export interface DeleteAccountInput {
+  password: string
+}
+
+// Cambio de correo en dos pasos: la API manda un enlace al correo ACTUAL y la
+// dirección solo cambia cuando se abre. `callbackURL` se rellena en el servicio.
+export interface ChangeEmailInput {
+  newEmail: string
 }
