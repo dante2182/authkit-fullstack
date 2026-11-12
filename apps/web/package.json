@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test:composition": "node scripts/auth-composition.probe.mjs",
+    "test:401": "node scripts/unauthorized-401.probe.mjs",
     "typecheck": "tsc -b",
     "preview": "vite preview"
   },

@@ -98,6 +98,15 @@ con `null` cuando no hay sesión.
 La sesión vive en una cookie `httpOnly`: el cliente usa `credentials: 'include'` y nunca guarda
 tokens en el navegador.
 
+### Sesión caducada (401)
+
+`request` (`src/services/http.ts`) emite `authkit:unauthorized` cuando una petición autenticada
+recibe `401`. `AuthProvider` escucha el evento, limpia el usuario y `ProtectedRoute` redirige a
+`/login` guardando el destino original en `state.from`.
+
+El login con contraseña incorrecta **no** dispara el evento: `/auth/sign-in/email` está en la
+lista de respuestas de negocio. Cualquier otro `401` de la API se trata como sesión inválida.
+
 ### Métodos de acceso
 
 La pantalla de acceso no se configura en el frontend: la compone con lo que publica
