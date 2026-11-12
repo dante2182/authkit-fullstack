@@ -16,7 +16,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@hookform/resolvers": "5.9.2",
+    "@hookform/resolvers": "7.0.5",
     "better-auth": "1.7.11",
     "lucide-react": "1.59.0",
     "react": "^19.2.8",
