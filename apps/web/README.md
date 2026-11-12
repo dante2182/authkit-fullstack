@@ -187,6 +187,7 @@ Rutas del frontend: `/login`, `/register`, `/forgot-password`, `/reset-password?
 | ------------------ | -------------------------------------- |
 | Editar perfil      | `PATCH /api/users/me`                  |
 | Borrar la cuenta   | `DELETE /api/users/me`                 |
+| Cambiar correo     | `POST /api/auth/change-email`          |
 | Cuentas vinculadas | `GET /api/auth/list-accounts`          |
 | Cambiar contraseña | `POST /api/auth/change-password`       |
 | Listar sesiones    | `GET /api/auth/list-sessions`          |
@@ -207,6 +208,11 @@ La "Zona de peligro" borra la cuenta con `DELETE /api/users/me`. El backend exig
 contraseña actual (re-autenticación) y responde `204`; después la UI limpia la sesión local y
 vuelve a `/login`. Las cuentas solo-OAuth no ven el formulario: no tienen contraseña que
 confirmar.
+
+Cambiar de correo es un flujo de dos pasos: `POST /api/auth/change-email` envía un enlace al
+correo **actual** y la dirección solo cambia al abrirlo (el enlace aterriza en `/verify-email`).
+La UI muestra siempre el mismo aviso, exista o no la dirección nueva, porque la API responde
+`200 { status: true }` en ambos casos.
 
 ## Administración
 
