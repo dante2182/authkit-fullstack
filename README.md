@@ -53,30 +53,30 @@ Todas las rutas públicas cuelgan de `/api`. La única excepción es la sonda de
 infraestructura `GET /health`, que vive en la raíz para que el balanceador no dependa
 del prefijo de la API.
 
-| Método | Ruta                                | Auth   | Qué hace                                                           |
-| ------ | ----------------------------------- | ------ | ------------------------------------------------------------------ |
-| GET    | `/health`                           | —      | Estado del proceso y de Postgres (503 si la DB no responde)        |
-| GET    | `/api`                              | —      | Mensaje de bienvenida                                              |
-| GET    | `/api/config/auth`                  | —      | Capacidades de autenticación para el frontend (sin secretos)       |
-| POST   | `/api/auth/sign-up/email`           | —      | Registro con email y contraseña                                    |
-| POST   | `/api/auth/sign-in/email`           | —      | Login; la sesión viaja en una cookie httpOnly                      |
-| POST   | `/api/auth/sign-in/social`          | —      | Inicia el flujo OAuth de Google o GitHub                           |
-| GET    | `/api/auth/callback/:provider`      | —      | Callback OAuth (`google`, `github`)                                |
-| POST   | `/api/auth/sign-out`                | —      | Cierra la sesión y expira la cookie                                |
-| GET    | `/api/auth/get-session`             | Cookie | Sesión actual (`200 null` si no hay sesión)                        |
-| POST   | `/api/auth/request-password-reset`  | —      | Envía el enlace de reset (respuesta genérica, no revela si existe) |
-| POST   | `/api/auth/reset-password`          | —      | Cambia la contraseña con el token y revoca todas las sesiones      |
-| POST   | `/api/auth/send-verification-email` | —      | Reenvía el correo de verificación                                  |
-| GET    | `/api/auth/verify-email`            | —      | Valida el token y redirige al frontend (`?error=` si falla)        |
-| GET    | `/api/auth/list-sessions`           | Cookie | Lista las sesiones activas                                         |
-| POST   | `/api/auth/revoke-session`          | Cookie | Revoca una sesión propia por token                                 |
-| POST   | `/api/auth/revoke-other-sessions`   | Cookie | Revoca todas las sesiones menos la actual                          |
-| POST   | `/api/auth/change-password`         | Cookie | Cambia la contraseña; opcionalmente revoca las otras sesiones      |
-| GET    | `/api/users/me`                     | Cookie | Usuario actual                                                     |
-| PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                          |
-| DELETE | `/api/users/me`                     | Cookie | Borra la cuenta; exige la contraseña actual y expira la cookie     |
-| GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada (ADMIN verificado)                         |
-| PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                     |
+| Método | Ruta                                | Auth   | Qué hace                                                                     |
+| ------ | ----------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| GET    | `/health`                           | —      | Estado del proceso y de Postgres (503 si la DB no responde)                  |
+| GET    | `/api`                              | —      | Mensaje de bienvenida                                                        |
+| GET    | `/api/config/auth`                  | —      | Capacidades de autenticación para el frontend (sin secretos)                 |
+| POST   | `/api/auth/sign-up/email`           | —      | Registro con email y contraseña                                              |
+| POST   | `/api/auth/sign-in/email`           | —      | Login; la sesión viaja en una cookie httpOnly                                |
+| POST   | `/api/auth/sign-in/social`          | —      | Inicia el flujo OAuth de Google o GitHub                                     |
+| GET    | `/api/auth/callback/:provider`      | —      | Callback OAuth (`google`, `github`)                                          |
+| POST   | `/api/auth/sign-out`                | —      | Cierra la sesión y expira la cookie                                          |
+| GET    | `/api/auth/get-session`             | Cookie | Sesión actual (`200 null` si no hay sesión)                                  |
+| POST   | `/api/auth/request-password-reset`  | —      | Envía el enlace de reset (respuesta genérica, no revela si existe)           |
+| POST   | `/api/auth/reset-password`          | —      | Cambia la contraseña con el token y revoca todas las sesiones                |
+| POST   | `/api/auth/send-verification-email` | —      | Reenvía el correo de verificación                                            |
+| GET    | `/api/auth/verify-email`            | —      | Valida el token y redirige al frontend (`?error=` si falla)                  |
+| GET    | `/api/auth/list-sessions`           | Cookie | Lista las sesiones activas                                                   |
+| POST   | `/api/auth/revoke-session`          | Cookie | Revoca una sesión propia por token                                           |
+| POST   | `/api/auth/revoke-other-sessions`   | Cookie | Revoca todas las sesiones menos la actual                                    |
+| POST   | `/api/auth/change-password`         | Cookie | Cambia la contraseña; opcionalmente revoca las otras sesiones                |
+| GET    | `/api/users/me`                     | Cookie | Usuario actual                                                               |
+| PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                                    |
+| DELETE | `/api/users/me`                     | Cookie | Borra la cuenta; exige la contraseña actual y expira la cookie               |
+| GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada, con búsqueda parcial por `email` (ADMIN verificado) |
+| PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                               |
 
 `/api/auth/*` lo sirve el handler nativo de better-auth (`toNodeHandler(auth)`),
 montado en `src/app.ts` **antes** de `express.json()` para que el body llegue intacto.
@@ -244,10 +244,10 @@ La plantilla trae un RBAC mínimo y genérico, sin lógica de dominio:
 
 #### Endpoints de administración
 
-| Método | Ruta                        | Permiso                    | Qué hace                                                |
-| ------ | --------------------------- | -------------------------- | ------------------------------------------------------- |
-| GET    | `/api/admin/users`          | `admin.users.read`         | Lista paginada (`page`, `limit` máximo 100, default 20) |
-| PATCH  | `/api/admin/users/:id/role` | `admin.users.roles.update` | Cambia el rol de otro usuario                           |
+| Método | Ruta                        | Permiso                    | Qué hace                                                                                                   |
+| ------ | --------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/admin/users`          | `admin.users.read`         | Lista paginada (`page`, `limit` máximo 100, default 20; `email` filtra parcial, sin distinguir mayúsculas) |
+| PATCH  | `/api/admin/users/:id/role` | `admin.users.roles.update` | Cambia el rol de otro usuario                                                                              |
 
 Solo se devuelven campos seguros (`id`, `name`, `email`, `emailVerified`, `role`,
 `createdAt`); nunca datos de `Account`. Reglas del cambio de rol:

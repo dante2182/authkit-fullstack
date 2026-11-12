@@ -17,6 +17,7 @@ export const adminUserSelect = {
 interface ListUsersParams {
   page: number
   limit: number
+  email?: string | undefined
 }
 
 interface ChangeRoleParams {
@@ -26,15 +27,21 @@ interface ChangeRoleParams {
 }
 
 export const adminService = {
-  async listUsers({ page, limit }: ListUsersParams) {
+  async listUsers({ page, limit, email }: ListUsersParams) {
+    // `contains` + `mode: insensitive`: búsqueda parcial y sin distinguir
+    // mayúsculas. El where se comparte entre listado y conteo para que la
+    // paginación refleje el filtro.
+    const where = email ? { email: { contains: email, mode: 'insensitive' as const } } : {}
+
     const [users, total] = await prisma.$transaction([
       prisma.user.findMany({
+        where,
         select: adminUserSelect,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.user.count(),
+      prisma.user.count({ where }),
     ])
 
     return { users, total, page, limit, pages: Math.ceil(total / limit) }

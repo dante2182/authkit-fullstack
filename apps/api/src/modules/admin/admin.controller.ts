@@ -5,8 +5,8 @@ import type { ChangeRoleInput, ListUsersQuery } from './admin.schema.js'
 import { adminService } from './admin.service.js'
 
 export const listUsers: RequestHandler = async (req, res) => {
-  const { page, limit } = req.query as unknown as ListUsersQuery
-  const result = await adminService.listUsers({ page, limit })
+  const { page, limit, email } = req.query as unknown as ListUsersQuery
+  const result = await adminService.listUsers({ page, limit, email })
 
   res.json({
     users: result.users,

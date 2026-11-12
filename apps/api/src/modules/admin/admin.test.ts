@@ -124,6 +124,52 @@ describe('GET /api/admin/users', () => {
     expect(overLimit.body.error.code).toBe('VALIDATION_ERROR')
   })
 
+  it('filtra por email parcial sin distinguir mayúsculas', async () => {
+    const admin = await registerAdmin()
+    await registerUser('alice@example.com')
+    await registerUser('bob@other.com')
+
+    const response = await request(app)
+      .get('/api/admin/users?email=ALICE')
+      .set('Cookie', admin.cookie)
+
+    expect(response.status).toBe(200)
+    expect(response.body.users.map((user: { email: string }) => user.email)).toEqual([
+      'alice@example.com',
+    ])
+    expect(response.body.pagination).toEqual({ page: 1, limit: 20, total: 1, pages: 1 })
+  })
+
+  it('combina el filtro por email con la paginación', async () => {
+    const admin = await registerAdmin()
+    await registerUser('match1@example.com')
+    await registerUser('match2@example.com')
+    await registerUser('match3@example.com')
+    await registerUser('nope@other.com')
+
+    const secondPage = await request(app)
+      .get('/api/admin/users?email=match&page=2&limit=2')
+      .set('Cookie', admin.cookie)
+
+    expect(secondPage.status).toBe(200)
+    expect(secondPage.body.users).toHaveLength(1)
+    expect(secondPage.body.pagination).toEqual({ page: 2, limit: 2, total: 3, pages: 2 })
+  })
+
+  it('ignora un email vacío o con solo espacios', async () => {
+    const admin = await registerAdmin()
+    await registerUser('user1@example.com')
+
+    for (const query of ['email=', 'email=%20%20']) {
+      const response = await request(app)
+        .get(`/api/admin/users?${query}`)
+        .set('Cookie', admin.cookie)
+
+      expect(response.status).toBe(200)
+      expect(response.body.pagination.total).toBe(2)
+    }
+  })
+
   it.each(['limit=101', 'limit=0', 'limit=1.5', 'limit=abc', 'page=0', 'page=-1', 'page=1.5'])(
     'rechaza la query inválida %s con 422',
     async (query) => {
