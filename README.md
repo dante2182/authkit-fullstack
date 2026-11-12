@@ -169,6 +169,11 @@ prohibido porque permite falsificar la IP y saltarse el rate limit.
   registra solo el asunto y el destinatario (nunca el cuerpo, que lleva el enlace con el
   token); en producción la API no arranca sin ella, así que imprimir el correo es
   imposible.
+- `EMAIL_FROM` debe usar un dominio **verificado en Resend** en producción. Resend
+  responde `403` con "The domain is not verified" si el remitente no pertenece a un
+  dominio verificado, así que los enlaces de verificación, recuperación y cambio de
+  correo no llegarían. Verificar el dominio (registros DNS en Resend) es un paso manual
+  del despliegue: nada en el código lo valida.
 - `src/shared/email/email.service.ts` es el único punto de envío (fetch nativo contra
   la API de Resend, sin SDK). Los tests lo sustituyen con `vi.mock`.
 - Las plantillas viven en `src/shared/email/templates.ts`.

@@ -24,26 +24,26 @@ Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`
 
 ## Tasks
 
-| ID  | Specs  | Route  | Status  | Evidence                                                                    |
-| --- | ------ | ------ | ------- | --------------------------------------------------------------------------- |
-| B1  | S1, S2 | inline | hecho   | `account-linking.test.ts` 5/5 (RED config → GREEN); `pnpm check` OK         |
-| B2  | S3     | inline | hecho   | `sensitive-rate-limit.test.ts` 5/5 (+3 nuevos); `pnpm check` OK             |
-| B3  | S4     | inline | hecho   | `require-email-verification-env.test.ts` 3/3; `pnpm check` OK               |
-| B4  | S5     | inline | hecho   | `session-config.test.ts` 3/3; `pnpm check` OK                               |
-| B5  | S6     | inline | hecho   | `users.test.ts` 8/8 (+2 nuevos); `pnpm check` OK                            |
-| B6  | S7     | inline | hecho   | `api-rate-limit.test.ts` 3/3; `pnpm check` OK                               |
-| B7  | S8     | inline | hecho   | `admin.test.ts` 28/28 (+3 nuevos); `pnpm check` OK                          |
-| B8  | S9     | inline | hecho   | `change-email.test.ts` 7/7; verifier 2 blockers corregidos; `pnpm check` OK |
-| F1  | S10    | inline | hecho   | `test:401` 6/6 (+ mutación); verifier PASS; `pnpm check` OK                 |
-| F2  | S11    | inline | hecho   | `AccountPage` lee `list-accounts`; build + composición OK                   |
-| F3  | S12    | inline | hecho   | `DeleteAccountSection` + `DELETE /users/me`; build OK                       |
-| F4  | S13    | inline | hecho   | Vitest + MSW: 14/14; `pnpm check` + build + composición + `test:401` OK     |
-| F5  | S14    | inline | hecho   | `ErrorBoundary` + `sonner`; 16/16 tests web; build OK                       |
-| F6  | S15    | inline | hecho   | buscador por email en admin; 18/18 tests web; build OK                      |
-| F7  | S15    | inline | hecho   | `ChangeEmailSection` + `POST /auth/change-email`; 20/20 tests web           |
-| I1  | S16    | inline | hecho   | `.github/workflows/ci.yml` corre `pnpm build` tras `test`                   |
-| I2  | S16    | inline | hecho   | `.github/dependabot.yml`: npm + github-actions, minor/patch agrupados       |
-| D1  | S17    | inline | pending | —                                                                           |
+| ID  | Specs  | Route  | Status | Evidence                                                                    |
+| --- | ------ | ------ | ------ | --------------------------------------------------------------------------- |
+| B1  | S1, S2 | inline | hecho  | `account-linking.test.ts` 5/5 (RED config → GREEN); `pnpm check` OK         |
+| B2  | S3     | inline | hecho  | `sensitive-rate-limit.test.ts` 5/5 (+3 nuevos); `pnpm check` OK             |
+| B3  | S4     | inline | hecho  | `require-email-verification-env.test.ts` 3/3; `pnpm check` OK               |
+| B4  | S5     | inline | hecho  | `session-config.test.ts` 3/3; `pnpm check` OK                               |
+| B5  | S6     | inline | hecho  | `users.test.ts` 8/8 (+2 nuevos); `pnpm check` OK                            |
+| B6  | S7     | inline | hecho  | `api-rate-limit.test.ts` 3/3; `pnpm check` OK                               |
+| B7  | S8     | inline | hecho  | `admin.test.ts` 28/28 (+3 nuevos); `pnpm check` OK                          |
+| B8  | S9     | inline | hecho  | `change-email.test.ts` 7/7; verifier 2 blockers corregidos; `pnpm check` OK |
+| F1  | S10    | inline | hecho  | `test:401` 6/6 (+ mutación); verifier PASS; `pnpm check` OK                 |
+| F2  | S11    | inline | hecho  | `AccountPage` lee `list-accounts`; build + composición OK                   |
+| F3  | S12    | inline | hecho  | `DeleteAccountSection` + `DELETE /users/me`; build OK                       |
+| F4  | S13    | inline | hecho  | Vitest + MSW: 14/14; `pnpm check` + build + composición + `test:401` OK     |
+| F5  | S14    | inline | hecho  | `ErrorBoundary` + `sonner`; 16/16 tests web; build OK                       |
+| F6  | S15    | inline | hecho  | buscador por email en admin; 18/18 tests web; build OK                      |
+| F7  | S15    | inline | hecho  | `ChangeEmailSection` + `POST /auth/change-email`; 20/20 tests web           |
+| I1  | S16    | inline | hecho  | `.github/workflows/ci.yml` corre `pnpm build` tras `test`                   |
+| I2  | S16    | inline | hecho  | `.github/dependabot.yml`: npm + github-actions, minor/patch agrupados       |
+| D1  | S17    | inline | hecho  | README: `EMAIL_FROM` exige dominio verificado en Resend (403)               |
 
 ## Log
 
