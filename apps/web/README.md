@@ -157,11 +157,16 @@ Rutas del frontend: `/login`, `/register`, `/forgot-password`, `/reset-password?
 | Pantalla           | Endpoint                               |
 | ------------------ | -------------------------------------- |
 | Editar perfil      | `PATCH /api/users/me`                  |
+| Cuentas vinculadas | `GET /api/auth/list-accounts`          |
 | Cambiar contraseña | `POST /api/auth/change-password`       |
 | Listar sesiones    | `GET /api/auth/list-sessions`          |
 | Sesión actual      | `GET /api/auth/get-session`            |
 | Revocar una sesión | `POST /api/auth/revoke-session`        |
 | Revocar las demás  | `POST /api/auth/revoke-other-sessions` |
+
+El bloque de contraseña depende de `list-accounts`: si no hay una cuenta con
+`providerId: "credential"`, el usuario entra solo con proveedores sociales y el formulario se
+sustituye por una nota. Si la comprobación falla, se muestra el formulario igualmente.
 
 La sesión actual se identifica comparando el `token` de `list-sessions` con el de
 `get-session`; el token no se guarda en el navegador. La sesión actual no se revoca

@@ -24,26 +24,26 @@ Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`
 
 ## Tasks
 
-| ID  | Specs  | Route  | Status  | Evidence                                                            |
-| --- | ------ | ------ | ------- | ------------------------------------------------------------------- |
-| B1  | S1, S2 | inline | hecho   | `account-linking.test.ts` 5/5 (RED config → GREEN); `pnpm check` OK |
-| B2  | S3     | inline | hecho   | `sensitive-rate-limit.test.ts` 5/5 (+3 nuevos); `pnpm check` OK     |
-| B3  | S4     | inline | hecho   | `require-email-verification-env.test.ts` 3/3; `pnpm check` OK       |
-| B4  | S5     | inline | hecho   | `session-config.test.ts` 3/3; `pnpm check` OK                       |
-| B5  | S6     | inline | hecho   | `users.test.ts` 8/8 (+2 nuevos); `pnpm check` OK                    |
-| B6  | S7     | inline | hecho   | `api-rate-limit.test.ts` 3/3; `pnpm check` OK                       |
-| B7  | S8     | inline | hecho   | `admin.test.ts` 28/28 (+3 nuevos); `pnpm check` OK                  |
-| B8  | S9     | inline | pending | —                                                                   |
-| F1  | S10    | inline | pending | —                                                                   |
-| F2  | S11    | inline | pending | —                                                                   |
-| F3  | S12    | inline | pending | —                                                                   |
-| F4  | S13    | inline | pending | —                                                                   |
-| F5  | S14    | inline | pending | —                                                                   |
-| F6  | S15    | inline | pending | —                                                                   |
-| F7  | S15    | inline | pending | —                                                                   |
-| I1  | S16    | inline | pending | —                                                                   |
-| I2  | S16    | inline | pending | —                                                                   |
-| D1  | S17    | inline | pending | —                                                                   |
+| ID  | Specs  | Route  | Status  | Evidence                                                                    |
+| --- | ------ | ------ | ------- | --------------------------------------------------------------------------- |
+| B1  | S1, S2 | inline | hecho   | `account-linking.test.ts` 5/5 (RED config → GREEN); `pnpm check` OK         |
+| B2  | S3     | inline | hecho   | `sensitive-rate-limit.test.ts` 5/5 (+3 nuevos); `pnpm check` OK             |
+| B3  | S4     | inline | hecho   | `require-email-verification-env.test.ts` 3/3; `pnpm check` OK               |
+| B4  | S5     | inline | hecho   | `session-config.test.ts` 3/3; `pnpm check` OK                               |
+| B5  | S6     | inline | hecho   | `users.test.ts` 8/8 (+2 nuevos); `pnpm check` OK                            |
+| B6  | S7     | inline | hecho   | `api-rate-limit.test.ts` 3/3; `pnpm check` OK                               |
+| B7  | S8     | inline | hecho   | `admin.test.ts` 28/28 (+3 nuevos); `pnpm check` OK                          |
+| B8  | S9     | inline | hecho   | `change-email.test.ts` 7/7; verifier 2 blockers corregidos; `pnpm check` OK |
+| F1  | S10    | inline | hecho   | `test:401` 6/6 (+ mutación); verifier PASS; `pnpm check` OK                 |
+| F2  | S11    | inline | hecho   | `AccountPage` lee `list-accounts`; build + composición OK                   |
+| F3  | S12    | inline | pending | —                                                                           |
+| F4  | S13    | inline | pending | —                                                                           |
+| F5  | S14    | inline | pending | —                                                                           |
+| F6  | S15    | inline | pending | —                                                                           |
+| F7  | S15    | inline | pending | —                                                                           |
+| I1  | S16    | inline | pending | —                                                                           |
+| I2  | S16    | inline | pending | —                                                                           |
+| D1  | S17    | inline | pending | —                                                                           |
 
 ## Log
 
