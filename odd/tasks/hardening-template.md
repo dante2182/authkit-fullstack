@@ -36,7 +36,7 @@ Branch: `feat/hardening-template`. Delivery: `ask-on-risk`. Runner: `pnpm check`
 | B8  | S9     | inline | hecho   | `change-email.test.ts` 7/7; verifier 2 blockers corregidos; `pnpm check` OK |
 | F1  | S10    | inline | hecho   | `test:401` 6/6 (+ mutación); verifier PASS; `pnpm check` OK                 |
 | F2  | S11    | inline | hecho   | `AccountPage` lee `list-accounts`; build + composición OK                   |
-| F3  | S12    | inline | pending | —                                                                           |
+| F3  | S12    | inline | hecho   | `DeleteAccountSection` + `DELETE /users/me`; build OK                       |
 | F4  | S13    | inline | pending | —                                                                           |
 | F5  | S14    | inline | pending | —                                                                           |
 | F6  | S15    | inline | pending | —                                                                           |

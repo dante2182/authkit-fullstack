@@ -34,3 +34,8 @@ export interface ChangePasswordResponse {
   token: string | null
   user: AuthUser
 }
+
+// DELETE /api/users/me exige re-autenticación: la sesión sola no basta.
+export interface DeleteAccountInput {
+  password: string
+}

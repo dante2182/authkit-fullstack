@@ -4,6 +4,7 @@ import type {
   AccountSession,
   ChangePasswordInput,
   ChangePasswordResponse,
+  DeleteAccountInput,
   LinkedAccount,
   PublicUser,
   UpdateProfileInput,
@@ -12,6 +13,11 @@ import type {
 export const accountService = {
   updateProfile(input: UpdateProfileInput) {
     return request<{ user: PublicUser }>('/users/me', { method: 'PATCH', body: input })
+  },
+
+  // Borrado definitivo: el backend exige la contraseña actual y responde 204.
+  deleteAccount(input: DeleteAccountInput) {
+    return request<void>('/users/me', { method: 'DELETE', body: input })
   },
 
   changePassword(input: ChangePasswordInput) {
