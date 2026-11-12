@@ -212,16 +212,20 @@ confirmar.
 
 `/admin/users` consume el módulo admin de la API:
 
-| Pantalla        | Endpoint                          |
-| --------------- | --------------------------------- |
-| Listar usuarios | `GET /api/admin/users?page&limit` |
-| Cambiar rol     | `PATCH /api/admin/users/:id/role` |
+| Pantalla        | Endpoint                                |
+| --------------- | --------------------------------------- |
+| Listar usuarios | `GET /api/admin/users?page&limit&email` |
+| Cambiar rol     | `PATCH /api/admin/users/:id/role`       |
 
 `AdminRoute` exige sesión, rol `ADMIN` y email verificado; la autorización real la
 impone la API (`requireAuth → requireVerifiedEmail → requirePermission`). La tabla
 muestra solo campos públicos y nunca datos de `Account`. El selector de rol pide
 confirmación y refleja los errores de negocio de la API (último administrador,
 auto-degradación, permisos insuficientes).
+
+El buscador envía `email` como filtro parcial (`contains`, sin distinguir mayúsculas) y
+solo al pulsar "Buscar": escribir no lanza una petición por pulsación. Al filtrar se vuelve
+a la página 1, porque la paginación anterior deja de aplicar. "Limpiar" quita el filtro.
 
 La API redirige los enlaces de correo a `CORS_ORIGIN/reset-password` y `CORS_ORIGIN/verify-email`,
 así que `CORS_ORIGIN` en `apps/api/.env` debe coincidir con la URL del frontend.

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
@@ -89,6 +90,57 @@ describe('AdminUsersPage', () => {
     renderAdminUsers()
 
     expect(await screen.findByText('No hay usuarios registrados')).toBeInTheDocument()
+  })
+
+  it('filtra por email y envía el valor en la query', async () => {
+    const user = userEvent.setup()
+    const requested: Array<string | null> = []
+
+    server.use(
+      http.get(`${API}/admin/users`, ({ request }) => {
+        requested.push(new URL(request.url).searchParams.get('email'))
+        const email = requested.at(-1)
+
+        return listResponse(email ? users.filter((item) => item.email.includes(email)) : users)
+      }),
+    )
+
+    renderAdminUsers()
+
+    await screen.findByText('bruno@example.com')
+
+    await user.type(screen.getByLabelText('Buscar por email'), '  bruno  ')
+    await user.click(screen.getByRole('button', { name: 'Buscar' }))
+
+    // El filtro se recorta y la tabla se queda solo con las coincidencias.
+    expect(await screen.findByText('bruno@example.com')).toBeInTheDocument()
+    expect(screen.queryByText('admin@example.com')).not.toBeInTheDocument()
+    expect(requested.at(-1)).toBe('bruno')
+  })
+
+  it('limpia el filtro y vuelve a listar todo', async () => {
+    const user = userEvent.setup()
+
+    server.use(
+      http.get(`${API}/admin/users`, ({ request }) => {
+        const email = new URL(request.url).searchParams.get('email')
+        return listResponse(email ? [] : users)
+      }),
+    )
+
+    renderAdminUsers()
+
+    await screen.findByText('bruno@example.com')
+
+    await user.type(screen.getByLabelText('Buscar por email'), 'nadie')
+    await user.click(screen.getByRole('button', { name: 'Buscar' }))
+
+    expect(await screen.findByText('Ningún email coincide')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Limpiar' }))
+
+    expect(await screen.findByText('bruno@example.com')).toBeInTheDocument()
+    expect(screen.getByLabelText('Buscar por email')).toHaveValue('')
   })
 
   it('muestra el error y permite reintentar', async () => {
