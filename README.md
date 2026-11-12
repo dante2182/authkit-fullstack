@@ -198,12 +198,31 @@ Hay dos mecanismos independientes:
   `emailVerified` es `false`.
 
 `requireVerifiedEmail` no está aplicado a ninguna ruta existente: un usuario con el email
-mal escrito debe poder borrar su cuenta o recuperar el acceso. Úsalo en rutas nuevas de
-riesgo, por ejemplo cambio de email o acciones de negocio sensibles:
+mal escrito debe poder borrar su cuenta, recuperar el acceso o corregir su dirección.
+Úsalo en rutas nuevas de riesgo, por ejemplo acciones de negocio sensibles:
 
 ```ts
 router.post('/orders', requireVerifiedEmail, ordersController.create)
 ```
+
+### Cambio de email
+
+`POST /api/auth/change-email` (`{ newEmail, callbackURL? }`) está activo con verificación
+en dos pasos:
+
+1. Si el email actual está verificado, se envía un enlace de confirmación al buzón
+   **actual** (`sendChangeEmailConfirmation`). Quien solo controle el buzón nuevo no
+   puede completar el cambio.
+2. Al confirmar, se envía la verificación al buzón **nuevo**.
+3. Al abrir ese segundo enlace, el email se actualiza y queda `emailVerified: true`.
+
+`updateEmailWithoutVerification` está en `false`: ni una cuenta sin verificar cambia de
+dirección sin pasar por el correo. Si la dirección nueva ya pertenece a otra cuenta, el
+endpoint responde `200 { status: true }` sin enviar nada, para no revelar qué correos
+existen. Cambiar al mismo correo responde `400`.
+
+`/api/auth/change-email` comparte el rate limit por email de las rutas sensibles, usando
+`newEmail` como clave (mismos `SENSITIVE_RATE_LIMIT_*`).
 
 ### Gestión de sesiones
 
@@ -308,12 +327,12 @@ Para añadir un **permiso** nuevo: agrégalo a `PERMISSIONS`, concédelo en
 ### Rate limit
 
 `/auth` tiene un límite general (100 peticiones/minuto). Los endpoints sensibles
-(`forgot-password`, `reset-password`, `send-verification-email`) tienen además un límite
-estricto por IP y por email: `SENSITIVE_RATE_LIMIT_MAX` (default 5) cada
+(`forgot-password`, `reset-password`, `send-verification-email`, `change-email`) tienen
+además un límite estricto por IP y por email: `SENSITIVE_RATE_LIMIT_MAX` (default 5) cada
 `SENSITIVE_RATE_LIMIT_WINDOW_MINUTES` (default 15). El email se normaliza (minúsculas y
 sin espacios) y se cuenta antes de consultar la base, así que la respuesta es idéntica
-exista o no el usuario y el límite no sirve para enumerar cuentas. Se puede desactivar
-con `SENSITIVE_RATE_LIMIT_ENABLED=false`.
+exista o no el usuario y el límite no sirve para enumerar cuentas. En `change-email` la
+clave es `newEmail`. Se puede desactivar con `SENSITIVE_RATE_LIMIT_ENABLED=false`.
 
 Las rutas de negocio (`/api/users/*` y `/api/admin/*`) tienen su propio límite general:
 `API_RATE_LIMIT_MAX` (default 300) cada `API_RATE_LIMIT_WINDOW_MINUTES` (default 1).

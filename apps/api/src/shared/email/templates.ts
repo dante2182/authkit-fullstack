@@ -57,3 +57,31 @@ Si no creaste esta cuenta, ignora este correo.`,
     ),
   }
 }
+
+// Confirmación del cambio de dirección: se envía al correo ACTUAL, no al nuevo.
+// Quien controla el buzón nuevo no puede completar el cambio sin aprobarlo antes
+// desde la cuenta de la que se quiere salir.
+export function emailChangeConfirmationEmail(
+  recipient: EmailRecipient,
+  newEmail: string,
+  url: string,
+): EmailMessage {
+  return {
+    to: recipient.to,
+    subject: 'Confirma el cambio de correo',
+    text: `Hola ${recipient.name},
+
+Pediste cambiar tu correo a ${newEmail}.
+
+${url}
+
+Si no fuiste tú, ignora este correo: tu dirección no cambiará. El enlace caduca en 1 hora.`,
+    html: layout(
+      'Confirma el cambio de correo',
+      `<p style="${PARAGRAPH_STYLE}">Hola ${recipient.name},</p>
+<p style="${PARAGRAPH_STYLE}">Pediste cambiar tu correo a <strong>${newEmail}</strong>.</p>
+<p style="${PARAGRAPH_STYLE}">${button(url, 'Confirmar cambio')}</p>
+<p style="${PARAGRAPH_STYLE}">Si no fuiste tú, ignora este correo: tu dirección no cambiará. El enlace caduca en 1 hora.</p>`,
+    ),
+  }
+}

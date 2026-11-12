@@ -94,6 +94,79 @@ describe('rate limit por email de endpoints sensibles', () => {
     expect((await attempt('10.0.1.3')).status).toBe(429)
   })
 
+  it('se aplica también al cambio de email, usando el correo nuevo', async () => {
+    const app = await loadLimitedApp('2')
+
+    const signUp = await request(app)
+      .post('/api/auth/sign-up/email')
+      .send({ name: 'Test', email: 'change@example.com', password: 'SuperSecret123!' })
+    expect(signUp.status).toBe(200)
+
+    const raw = signUp.headers['set-cookie'] as string | string[] | undefined
+    const cookies = !raw ? [] : Array.isArray(raw) ? raw : [raw]
+    const cookie = cookies.find((entry) => entry.startsWith('better-auth.session_token='))
+    if (!cookie) throw new Error('La respuesta no incluye la cookie de sesión')
+
+    const attempt = (ip: string) =>
+      request(app)
+        .post('/api/auth/change-email')
+        .set('Cookie', cookie.split(';')[0]!)
+        .set('X-Forwarded-For', ip)
+        .send({ newEmail: 'destino@example.com' })
+
+    expect((await attempt('10.0.4.1')).status).not.toBe(429)
+    expect((await attempt('10.0.4.2')).status).not.toBe(429)
+
+    const blocked = await attempt('10.0.4.3')
+    expect(blocked.status).toBe(429)
+    expect(blocked.body.error.code).toBe('RATE_LIMITED')
+  })
+
+  it('usa newEmail aunque el body traiga un email de señuelo', async () => {
+    const app = await loadLimitedApp('2')
+
+    const signUp = await request(app)
+      .post('/api/auth/sign-up/email')
+      .send({ name: 'Test', email: 'change2@example.com', password: 'SuperSecret123!' })
+    expect(signUp.status).toBe(200)
+
+    const raw = signUp.headers['set-cookie'] as string | string[] | undefined
+    const cookies = !raw ? [] : Array.isArray(raw) ? raw : [raw]
+    const cookie = cookies.find((entry) => entry.startsWith('better-auth.session_token='))
+    if (!cookie) throw new Error('La respuesta no incluye la cookie de sesión')
+
+    const attempt = (ip: string, decoy: string) =>
+      request(app)
+        .post('/api/auth/change-email')
+        .set('Cookie', cookie.split(';')[0]!)
+        .set('X-Forwarded-For', ip)
+        .send({ email: decoy, newEmail: 'objetivo@example.com' })
+
+    expect((await attempt('10.0.5.1', '')).status).not.toBe(429)
+    expect((await attempt('10.0.5.2', `senuelo${Date.now()}@example.com`)).status).not.toBe(429)
+
+    const blocked = await attempt('10.0.5.3', `otro${Date.now()}@example.com`)
+    expect(blocked.status).toBe(429)
+    expect(blocked.body.error.code).toBe('RATE_LIMITED')
+  })
+
+  it('un newEmail de señuelo no mueve el cubo del reset de contraseña', async () => {
+    const app = await loadLimitedApp('2')
+
+    const attempt = (ip: string, decoy: string) =>
+      request(app)
+        .post('/api/auth/request-password-reset')
+        .set('X-Forwarded-For', ip)
+        .send({ email: 'victima@example.com', newEmail: decoy })
+
+    expect((await attempt('10.0.6.1', 'a@example.com')).status).toBe(200)
+    expect((await attempt('10.0.6.2', 'b@example.com')).status).toBe(200)
+
+    const blocked = await attempt('10.0.6.3', 'c@example.com')
+    expect(blocked.status).toBe(429)
+    expect(blocked.body.error.code).toBe('RATE_LIMITED')
+  })
+
   it('responde igual para un email existente y uno desconocido', async () => {
     await prisma.user.create({
       data: {

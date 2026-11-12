@@ -11,6 +11,7 @@ import {
   authRateLimit,
   sensitiveEmailRateLimit,
   sensitiveIpRateLimit,
+  sensitiveNewEmailRateLimit,
   usersRateLimit,
 } from './config/rate-limit.js'
 import { healthRouter } from './modules/health/health.routes.js'
@@ -100,6 +101,15 @@ app.use(
   parseSensitiveBody,
   sensitiveIpRateLimit,
   sensitiveEmailRateLimit,
+)
+// El cambio de email envía correos al buzón nuevo: mismo límite que el resto de
+// rutas que disparan un envío, pero con clave `newEmail`. Un `email` de señuelo
+// en el body no mueve el cubo.
+app.use(
+  '/api/auth/change-email',
+  parseSensitiveBody,
+  sensitiveIpRateLimit,
+  sensitiveNewEmailRateLimit,
 )
 app.all('/api/auth/*splat', toNodeHandler(auth))
 

@@ -68,8 +68,8 @@ export const envSchema = z
     // Email del usuario que `pnpm admin:bootstrap` promueve a ADMIN.
     // Vacío en .env equivale a no definido (el script falla con un mensaje claro).
     ADMIN_EMAIL: z.preprocess(emptyToUndefined, z.email().optional()),
-    // Rate limit estricto de los endpoints sensibles (reset y verificación de
-    // email). Activo por defecto salvo en test, donde se activa explícitamente.
+    // Rate limit estricto de los endpoints sensibles (reset, verificación y
+    // cambio de email). Activo por defecto salvo en test, donde se activa.
     SENSITIVE_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),
     SENSITIVE_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
     SENSITIVE_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),

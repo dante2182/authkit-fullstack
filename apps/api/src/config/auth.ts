@@ -1,7 +1,11 @@
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { emailService, type EmailMessage } from '../shared/email/email.service.js'
-import { passwordResetEmail, verificationEmail } from '../shared/email/templates.js'
+import {
+  emailChangeConfirmationEmail,
+  passwordResetEmail,
+  verificationEmail,
+} from '../shared/email/templates.js'
 import { buildSocialProvidersConfig } from './auth-capabilities.js'
 import { env } from './env.js'
 import { prisma } from './prisma.js'
@@ -79,6 +83,24 @@ export const auth = betterAuth({
         required: false,
         defaultValue: 'USER',
         input: false,
+      },
+    },
+    // Cambio de email en dos pasos: nunca se actualiza la dirección sin una
+    // confirmación por correo.
+    //   1. Si el email actual está verificado, se envía un enlace al buzón ACTUAL
+    //      para aprobar el cambio. Quien solo controle el buzón nuevo no puede
+    //      completarlo.
+    //   2. Después se envía la verificación al buzón NUEVO (emailVerification
+    //      .sendVerificationEmail, ya configurado arriba).
+    // `updateEmailWithoutVerification` se fija en false para que una cuenta sin
+    // verificar tampoco pueda cambiar de dirección sin pasar por el correo.
+    changeEmail: {
+      enabled: true,
+      updateEmailWithoutVerification: false,
+      sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+        sendEmailInBackground(
+          emailChangeConfirmationEmail({ to: user.email, name: user.name }, newEmail, url),
+        )
       },
     },
   },

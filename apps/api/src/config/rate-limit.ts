@@ -38,27 +38,41 @@ const MAX_EMAIL_KEY_LENGTH = 254
 // variantes del mismo buzón compartan cubo. El limitador se aplica antes de
 // mirar la base, así que responde igual exista o no el usuario y no sirve para
 // enumerar cuentas.
-export function emailKeyFromBody(req: Request): string | undefined {
+function emailKey(req: Request, field: 'email' | 'newEmail'): string | undefined {
   const body: unknown = req.body
   if (typeof body !== 'object' || body === null) return undefined
 
-  const raw = (body as { email?: unknown }).email
+  const raw = (body as Record<string, unknown>)[field]
   if (typeof raw !== 'string') return undefined
 
-  const email = raw.trim().toLowerCase()
-  if (email.length === 0 || email.length > MAX_EMAIL_KEY_LENGTH) return undefined
+  const normalized = raw.trim().toLowerCase()
+  if (normalized.length === 0 || normalized.length > MAX_EMAIL_KEY_LENGTH) return undefined
 
-  return `email:${email}`
+  return `email:${normalized}`
+}
+
+// Campo explícito por ruta, nunca "el que venga en el body": si el limitador
+// aceptara cualquier campo, un body con un `email` de señuelo movería la clave
+// y esquivaría el cubo del buzón real.
+export const emailKeyFromBody = (req: Request): string | undefined => emailKey(req, 'email')
+
+// El cambio de email envía la verificación a `newEmail`, no al correo de la
+// cuenta: ese es el buzón que hay que limitar.
+export const newEmailKeyFromBody = (req: Request): string | undefined => emailKey(req, 'newEmail')
+
+function createEmailRateLimit(keyOf: (req: Request) => string | undefined) {
+  return rateLimit({
+    ...sensitiveOptions,
+    skip: (req) => !env.SENSITIVE_RATE_LIMIT_ENABLED || keyOf(req) === undefined,
+    keyGenerator: (req) => keyOf(req) ?? '',
+    // La clave es el email, no la IP: se declara para no disparar el aviso.
+    validate: { keyGeneratorIpFallback: false },
+  })
 }
 
 // Requiere `express.json()` montado antes en la ruta: sin body no hay clave.
-export const sensitiveEmailRateLimit = rateLimit({
-  ...sensitiveOptions,
-  skip: (req) => !env.SENSITIVE_RATE_LIMIT_ENABLED || emailKeyFromBody(req) === undefined,
-  keyGenerator: (req) => emailKeyFromBody(req) ?? '',
-  // La clave es el email, no la IP: se declara para no disparar el aviso.
-  validate: { keyGeneratorIpFallback: false },
-})
+export const sensitiveEmailRateLimit = createEmailRateLimit(emailKeyFromBody)
+export const sensitiveNewEmailRateLimit = createEmailRateLimit(newEmailKeyFromBody)
 
 // Límite general de las rutas de negocio. Cada prefijo recibe su propia
 // instancia para que el consumo de /users no gaste el cubo de /admin.
