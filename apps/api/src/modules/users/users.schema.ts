@@ -10,3 +10,10 @@ export const updateUserSchema = z
   })
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
+
+// Re-autenticación: borrar la cuenta exige la contraseña actual.
+export const deleteUserSchema = z.object({
+  password: z.string().min(1, 'Introduce tu contraseña'),
+})
+
+export type DeleteUserInput = z.infer<typeof deleteUserSchema>

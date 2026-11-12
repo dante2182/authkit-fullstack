@@ -21,16 +21,23 @@ async function loadApp() {
   return app
 }
 
+// Limpia todos los proveedores sociales conocidos. Sin esto, un .env local con
+// GITHUB_CLIENT_ID/SECRET se cuela en los tests y cambia el resultado.
+function clearProviders(): void {
+  for (const provider of ['GOOGLE', 'GITHUB'] as const) {
+    vi.stubEnv(`${provider}_CLIENT_ID`, '')
+    vi.stubEnv(`${provider}_CLIENT_SECRET`, '')
+  }
+}
+
 function stubProviders(): void {
+  clearProviders()
   vi.stubEnv('GOOGLE_CLIENT_ID', 'google-id')
   vi.stubEnv('GOOGLE_CLIENT_SECRET', 'google-secret')
 }
 
 function stubNoProviders(): void {
-  vi.stubEnv('GOOGLE_CLIENT_ID', '')
-  vi.stubEnv('GOOGLE_CLIENT_SECRET', '')
-  vi.stubEnv('GITHUB_CLIENT_ID', '')
-  vi.stubEnv('GITHUB_CLIENT_SECRET', '')
+  clearProviders()
 }
 
 beforeEach(async () => {

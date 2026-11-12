@@ -53,30 +53,30 @@ Todas las rutas públicas cuelgan de `/api`. La única excepción es la sonda de
 infraestructura `GET /health`, que vive en la raíz para que el balanceador no dependa
 del prefijo de la API.
 
-| Método | Ruta                                | Auth   | Qué hace                                                           |
-| ------ | ----------------------------------- | ------ | ------------------------------------------------------------------ |
-| GET    | `/health`                           | —      | Estado del proceso y de Postgres (503 si la DB no responde)        |
-| GET    | `/api`                              | —      | Mensaje de bienvenida                                              |
-| GET    | `/api/config/auth`                  | —      | Capacidades de autenticación para el frontend (sin secretos)       |
-| POST   | `/api/auth/sign-up/email`           | —      | Registro con email y contraseña                                    |
-| POST   | `/api/auth/sign-in/email`           | —      | Login; la sesión viaja en una cookie httpOnly                      |
-| POST   | `/api/auth/sign-in/social`          | —      | Inicia el flujo OAuth de Google o GitHub                           |
-| GET    | `/api/auth/callback/:provider`      | —      | Callback OAuth (`google`, `github`)                                |
-| POST   | `/api/auth/sign-out`                | —      | Cierra la sesión y expira la cookie                                |
-| GET    | `/api/auth/get-session`             | Cookie | Sesión actual (`200 null` si no hay sesión)                        |
-| POST   | `/api/auth/request-password-reset`  | —      | Envía el enlace de reset (respuesta genérica, no revela si existe) |
-| POST   | `/api/auth/reset-password`          | —      | Cambia la contraseña con el token y revoca todas las sesiones      |
-| POST   | `/api/auth/send-verification-email` | —      | Reenvía el correo de verificación                                  |
-| GET    | `/api/auth/verify-email`            | —      | Valida el token y redirige al frontend (`?error=` si falla)        |
-| GET    | `/api/auth/list-sessions`           | Cookie | Lista las sesiones activas                                         |
-| POST   | `/api/auth/revoke-session`          | Cookie | Revoca una sesión propia por token                                 |
-| POST   | `/api/auth/revoke-other-sessions`   | Cookie | Revoca todas las sesiones menos la actual                          |
-| POST   | `/api/auth/change-password`         | Cookie | Cambia la contraseña; opcionalmente revoca las otras sesiones      |
-| GET    | `/api/users/me`                     | Cookie | Usuario actual                                                     |
-| PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                          |
-| DELETE | `/api/users/me`                     | Cookie | Borra la cuenta y expira la cookie                                 |
-| GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada (ADMIN verificado)                         |
-| PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                     |
+| Método | Ruta                                | Auth   | Qué hace                                                                     |
+| ------ | ----------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| GET    | `/health`                           | —      | Estado del proceso y de Postgres (503 si la DB no responde)                  |
+| GET    | `/api`                              | —      | Mensaje de bienvenida                                                        |
+| GET    | `/api/config/auth`                  | —      | Capacidades de autenticación para el frontend (sin secretos)                 |
+| POST   | `/api/auth/sign-up/email`           | —      | Registro con email y contraseña                                              |
+| POST   | `/api/auth/sign-in/email`           | —      | Login; la sesión viaja en una cookie httpOnly                                |
+| POST   | `/api/auth/sign-in/social`          | —      | Inicia el flujo OAuth de Google o GitHub                                     |
+| GET    | `/api/auth/callback/:provider`      | —      | Callback OAuth (`google`, `github`)                                          |
+| POST   | `/api/auth/sign-out`                | —      | Cierra la sesión y expira la cookie                                          |
+| GET    | `/api/auth/get-session`             | Cookie | Sesión actual (`200 null` si no hay sesión)                                  |
+| POST   | `/api/auth/request-password-reset`  | —      | Envía el enlace de reset (respuesta genérica, no revela si existe)           |
+| POST   | `/api/auth/reset-password`          | —      | Cambia la contraseña con el token y revoca todas las sesiones                |
+| POST   | `/api/auth/send-verification-email` | —      | Reenvía el correo de verificación                                            |
+| GET    | `/api/auth/verify-email`            | —      | Valida el token y redirige al frontend (`?error=` si falla)                  |
+| GET    | `/api/auth/list-sessions`           | Cookie | Lista las sesiones activas                                                   |
+| POST   | `/api/auth/revoke-session`          | Cookie | Revoca una sesión propia por token                                           |
+| POST   | `/api/auth/revoke-other-sessions`   | Cookie | Revoca todas las sesiones menos la actual                                    |
+| POST   | `/api/auth/change-password`         | Cookie | Cambia la contraseña; opcionalmente revoca las otras sesiones                |
+| GET    | `/api/users/me`                     | Cookie | Usuario actual                                                               |
+| PATCH  | `/api/users/me`                     | Cookie | Actualiza nombre e imagen                                                    |
+| DELETE | `/api/users/me`                     | Cookie | Borra la cuenta; exige la contraseña actual y expira la cookie               |
+| GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada, con búsqueda parcial por `email` (ADMIN verificado) |
+| PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                               |
 
 `/api/auth/*` lo sirve el handler nativo de better-auth (`toNodeHandler(auth)`),
 montado en `src/app.ts` **antes** de `express.json()` para que el body llegue intacto.
@@ -110,10 +110,11 @@ Dos flags eligen con qué se entra. Los defaults reproducen el comportamiento
 histórico: credenciales activas y registro abierto. Se aplican en el servidor, no
 solo en la UI.
 
-| Variable                      | Default | Qué hace                                                  |
-| ----------------------------- | ------- | --------------------------------------------------------- |
-| `AUTH_EMAIL_PASSWORD_ENABLED` | `true`  | Habilita login y registro con email/contraseña            |
-| `AUTH_SIGN_UP_ENABLED`        | `true`  | Permite crear cuentas nuevas (credenciales y proveedores) |
+| Variable                          | Default | Qué hace                                                  |
+| --------------------------------- | ------- | --------------------------------------------------------- |
+| `AUTH_EMAIL_PASSWORD_ENABLED`     | `true`  | Habilita login y registro con email/contraseña            |
+| `AUTH_SIGN_UP_ENABLED`            | `true`  | Permite crear cuentas nuevas (credenciales y proveedores) |
+| `AUTH_REQUIRE_EMAIL_VERIFICATION` | `false` | Exige verificar el email para entrar con credenciales     |
 
 | Caso                           | Configuración                                             |
 | ------------------------------ | --------------------------------------------------------- |
@@ -145,10 +146,15 @@ sin sesión y sin el rate limit de `/auth`):
 }
 ```
 
-**Account linking**: se mantiene el comportamiento por defecto de better-auth (un
-login social con el mismo email puede vincularse a la cuenta existente). Este
-contrato no lo cambia; si un proyecto derivado quiere exigir vinculación explícita,
-se configura `account.accountLinking` en `src/config/auth.ts`.
+**Account linking**: la vinculación implícita solo se acepta cuando el proveedor
+confirma que el email está verificado **y** la cuenta local ya tiene
+`emailVerified`. `account.accountLinking.trustedProviders` se deja vacío a
+propósito: better-auth trata un proveedor "confiable" como prueba suficiente
+aunque el IdP no confirme el email, y eso permitiría apropiarse de una cuenta
+pre-registrada. `allowDifferentEmails` también queda en `false`: vincular un
+email distinto exige una acción explícita del usuario autenticado. Cualquier
+otro caso se rechaza con `account_not_linked` y no crea filas en `Account`.
+Cubierto por `src/modules/auth/account-linking.test.ts`.
 
 ### Trust proxy
 
@@ -180,18 +186,49 @@ prohibido porque permite falsificar la IP y saltarse el rate limit.
 
 ### Exigir email verificado
 
-`requireVerifiedEmail` (`src/modules/auth/auth.middleware.ts`) devuelve `401` sin sesión
-y `403` con código `EMAIL_NOT_VERIFIED` si `emailVerified` es `false`.
+Hay dos mecanismos independientes:
 
-No está aplicado a ninguna ruta existente: un usuario con el email mal escrito debe
-poder borrar su cuenta o recuperar el acceso. Úsalo en rutas nuevas de riesgo, por
-ejemplo cambio de email o acciones de negocio sensibles:
+- **Login con credenciales**: `AUTH_REQUIRE_EMAIL_VERIFICATION=true` activa
+  `emailAndPassword.requireEmailVerification` de better-auth. Un usuario con
+  `emailVerified: false` recibe `403 EMAIL_NOT_VERIFIED` al iniciar sesión y se le
+  reenvía el enlace. El login social no se ve afectado: better-auth lo controla por
+  proveedor (`requireEmailVerification` en cada uno), no con esta variable.
+- **Rutas concretas**: `requireVerifiedEmail` (`src/modules/auth/auth.middleware.ts`)
+  devuelve `401` sin sesión y `403` con código `EMAIL_NOT_VERIFIED` si
+  `emailVerified` es `false`.
+
+`requireVerifiedEmail` no está aplicado a ninguna ruta existente: un usuario con el email
+mal escrito debe poder borrar su cuenta, recuperar el acceso o corregir su dirección.
+Úsalo en rutas nuevas de riesgo, por ejemplo acciones de negocio sensibles:
 
 ```ts
 router.post('/orders', requireVerifiedEmail, ordersController.create)
 ```
 
+### Cambio de email
+
+`POST /api/auth/change-email` (`{ newEmail, callbackURL? }`) está activo con verificación
+en dos pasos:
+
+1. Si el email actual está verificado, se envía un enlace de confirmación al buzón
+   **actual** (`sendChangeEmailConfirmation`). Quien solo controle el buzón nuevo no
+   puede completar el cambio.
+2. Al confirmar, se envía la verificación al buzón **nuevo**.
+3. Al abrir ese segundo enlace, el email se actualiza y queda `emailVerified: true`.
+
+`updateEmailWithoutVerification` está en `false`: ni una cuenta sin verificar cambia de
+dirección sin pasar por el correo. Si la dirección nueva ya pertenece a otra cuenta, el
+endpoint responde `200 { status: true }` sin enviar nada, para no revelar qué correos
+existen. Cambiar al mismo correo responde `400`.
+
+`/api/auth/change-email` comparte el rate limit por email de las rutas sensibles, usando
+`newEmail` como clave (mismos `SENSITIVE_RATE_LIMIT_*`).
+
 ### Gestión de sesiones
+
+La vida de la sesión se ajusta sin tocar código: `SESSION_EXPIRES_IN` (segundos,
+default `604800` = 7 días) y `SESSION_UPDATE_AGE` (segundos, default `86400` = 1 día;
+pasado ese tiempo, la sesión se renueva al usarla). Una variable vacía toma el default.
 
 Los endpoints son los nativos de better-auth:
 
@@ -226,10 +263,10 @@ La plantilla trae un RBAC mínimo y genérico, sin lógica de dominio:
 
 #### Endpoints de administración
 
-| Método | Ruta                        | Permiso                    | Qué hace                                                |
-| ------ | --------------------------- | -------------------------- | ------------------------------------------------------- |
-| GET    | `/api/admin/users`          | `admin.users.read`         | Lista paginada (`page`, `limit` máximo 100, default 20) |
-| PATCH  | `/api/admin/users/:id/role` | `admin.users.roles.update` | Cambia el rol de otro usuario                           |
+| Método | Ruta                        | Permiso                    | Qué hace                                                                                                   |
+| ------ | --------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/admin/users`          | `admin.users.read`         | Lista paginada (`page`, `limit` máximo 100, default 20; `email` filtra parcial, sin distinguir mayúsculas) |
+| PATCH  | `/api/admin/users/:id/role` | `admin.users.roles.update` | Cambia el rol de otro usuario                                                                              |
 
 Solo se devuelven campos seguros (`id`, `name`, `email`, `emailVerified`, `role`,
 `createdAt`); nunca datos de `Account`. Reglas del cambio de rol:
@@ -290,10 +327,18 @@ Para añadir un **permiso** nuevo: agrégalo a `PERMISSIONS`, concédelo en
 ### Rate limit
 
 `/auth` tiene un límite general (100 peticiones/minuto). Los endpoints sensibles
-(`forgot-password`, `reset-password`, `send-verification-email`) tienen además un límite
-estricto por IP y por email: `SENSITIVE_RATE_LIMIT_MAX` (default 5) cada
-`SENSITIVE_RATE_LIMIT_WINDOW_MINUTES` (default 15). Se puede desactivar con
-`SENSITIVE_RATE_LIMIT_ENABLED=false`.
+(`forgot-password`, `reset-password`, `send-verification-email`, `change-email`) tienen
+además un límite estricto por IP y por email: `SENSITIVE_RATE_LIMIT_MAX` (default 5) cada
+`SENSITIVE_RATE_LIMIT_WINDOW_MINUTES` (default 15). El email se normaliza (minúsculas y
+sin espacios) y se cuenta antes de consultar la base, así que la respuesta es idéntica
+exista o no el usuario y el límite no sirve para enumerar cuentas. En `change-email` la
+clave es `newEmail`. Se puede desactivar con `SENSITIVE_RATE_LIMIT_ENABLED=false`.
+
+Las rutas de negocio (`/api/users/*` y `/api/admin/*`) tienen su propio límite general:
+`API_RATE_LIMIT_MAX` (default 300) cada `API_RATE_LIMIT_WINDOW_MINUTES` (default 1).
+Cada prefijo usa un cubo independiente y se cuenta antes de comprobar la sesión, así que
+las peticiones sin autenticar también consumen cuota. Se desactiva con
+`API_RATE_LIMIT_ENABLED=false` (en test está desactivado por defecto).
 
 ### Migraciones
 
@@ -333,7 +378,8 @@ pnpm --filter api test:watch  # modo watch
   `migrate dev`). Cada test limpia las tablas con `TRUNCATE`.
 - El rate limit general de `/auth` se desactiva cuando `NODE_ENV=test`. El límite
   estricto de endpoints sensibles también, salvo que el test lo active con
-  `SENSITIVE_RATE_LIMIT_ENABLED=true`.
+  `SENSITIVE_RATE_LIMIT_ENABLED=true`. El límite de `/api/users` y `/api/admin` sigue
+  la misma regla con `API_RATE_LIMIT_ENABLED=true`.
 - Cobertura: registro (cookie httpOnly, sin `token` en el body), acceso protegido solo
   con esa cookie, login, logout (con y sin cookie), cookie falsificada, sesión
   expirada, `GET/PATCH/DELETE /api/users/me`, validaciones de entrada, limpieza de

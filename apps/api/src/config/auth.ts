@@ -1,7 +1,11 @@
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { emailService, type EmailMessage } from '../shared/email/email.service.js'
-import { passwordResetEmail, verificationEmail } from '../shared/email/templates.js'
+import {
+  emailChangeConfirmationEmail,
+  passwordResetEmail,
+  verificationEmail,
+} from '../shared/email/templates.js'
 import { buildSocialProvidersConfig } from './auth-capabilities.js'
 import { env } from './env.js'
 import { prisma } from './prisma.js'
@@ -27,6 +31,10 @@ export const auth = betterAuth({
     enabled: env.AUTH_EMAIL_PASSWORD_ENABLED,
     // Registro cerrado: los usuarios existentes siguen entrando con contraseña.
     disableSignUp: !env.AUTH_SIGN_UP_ENABLED,
+    // Con la variable activa, un email sin verificar no puede iniciar sesión
+    // con contraseña (403 EMAIL_NOT_VERIFIED). El login social no se ve
+    // afectado: better-auth lo controla por proveedor.
+    requireEmailVerification: env.AUTH_REQUIRE_EMAIL_VERIFICATION,
     // Un reset de contraseña revoca todas las sesiones abiertas del usuario.
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
@@ -42,6 +50,27 @@ export const auth = betterAuth({
       sendEmailInBackground(verificationEmail({ to: user.email, name: user.name }, url))
     },
   },
+  // Duración de la sesión en segundos. `updateAge` renueva la expiración
+  // cuando la sesión se usa pasado ese tiempo. Valores por env para ajustar
+  // la política sin tocar código.
+  session: {
+    expiresIn: env.SESSION_EXPIRES_IN,
+    updateAge: env.SESSION_UPDATE_AGE,
+  },
+  // Account linking: better-auth solo vincula implícitamente cuando el
+  // proveedor confirma `email_verified` y la cuenta local ya está verificada
+  // (`requireLocalEmailVerified` vale true por defecto y pasará a ser
+  // incondicional). `trustedProviders` se deja vacío a propósito: un proveedor
+  // listado ahí se vincularía aunque el IdP no confirme el email, que es justo
+  // el bypass que queremos evitar. Los únicos proveedores posibles son los
+  // configurados en `socialProviders`.
+  account: {
+    accountLinking: {
+      enabled: true,
+      allowDifferentEmails: false,
+      trustedProviders: [],
+    },
+  },
   // Cada proveedor se registra solo con su pareja completa de credenciales.
   socialProviders: buildSocialProvidersConfig(),
   user: {
@@ -54,6 +83,24 @@ export const auth = betterAuth({
         required: false,
         defaultValue: 'USER',
         input: false,
+      },
+    },
+    // Cambio de email en dos pasos: nunca se actualiza la dirección sin una
+    // confirmación por correo.
+    //   1. Si el email actual está verificado, se envía un enlace al buzón ACTUAL
+    //      para aprobar el cambio. Quien solo controle el buzón nuevo no puede
+    //      completarlo.
+    //   2. Después se envía la verificación al buzón NUEVO (emailVerification
+    //      .sendVerificationEmail, ya configurado arriba).
+    // `updateEmailWithoutVerification` se fija en false para que una cuenta sin
+    // verificar tampoco pueda cambiar de dirección sin pasar por el correo.
+    changeEmail: {
+      enabled: true,
+      updateEmailWithoutVerification: false,
+      sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+        sendEmailInBackground(
+          emailChangeConfirmationEmail({ to: user.email, name: user.name }, newEmail, url),
+        )
       },
     },
   },

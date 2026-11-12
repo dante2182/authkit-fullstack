@@ -20,6 +20,10 @@ const booleanFlag = (defaultValue: 'true' | 'false') =>
 const optionalBooleanFlag = (defaultValue: 'true' | 'false') =>
   z.preprocess(emptyToUndefined, booleanFlag(defaultValue))
 
+// Entero positivo donde `VAR=` vacío equivale a ausente (toma el default).
+const optionalPositiveInt = (defaultValue: number) =>
+  z.preprocess(emptyToUndefined, z.coerce.number().int().positive().default(defaultValue))
+
 // Esquema único: valida y tipa el entorno antes de arrancar.
 export const envSchema = z
   .object({
@@ -36,6 +40,9 @@ export const envSchema = z
     // El registro se cierra con AUTH_SIGN_UP_ENABLED=false (paneles internos).
     AUTH_EMAIL_PASSWORD_ENABLED: optionalBooleanFlag('true'),
     AUTH_SIGN_UP_ENABLED: optionalBooleanFlag('true'),
+    // Exige verificar el email antes de iniciar sesión con credenciales.
+    // Default false: un email mal escrito no debe dejar al usuario sin acceso.
+    AUTH_REQUIRE_EMAIL_VERIFICATION: optionalBooleanFlag('false'),
     // Proveedores sociales. Cada pareja es opcional, pero no se admite media
     // pareja: con solo el client id better-auth falla al construir la URL.
     GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
@@ -50,6 +57,10 @@ export const envSchema = z
     TRUST_PROXY: z.string().default('false'),
     // Minutos entre limpiezas de sesiones expiradas (default: 1 día).
     SESSION_CLEANUP_INTERVAL_MINUTES: z.coerce.number().int().positive().default(1440),
+    // Duración de la sesión y frecuencia de renovación, en segundos.
+    // Defaults de better-auth: 7 días de vida y renovación cada día.
+    SESSION_EXPIRES_IN: optionalPositiveInt(604800),
+    SESSION_UPDATE_AGE: optionalPositiveInt(86400),
     // Nivel de logs de pino. En test se silencia para no ensuciar la salida.
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
@@ -57,11 +68,16 @@ export const envSchema = z
     // Email del usuario que `pnpm admin:bootstrap` promueve a ADMIN.
     // Vacío en .env equivale a no definido (el script falla con un mensaje claro).
     ADMIN_EMAIL: z.preprocess(emptyToUndefined, z.email().optional()),
-    // Rate limit estricto de los endpoints sensibles (reset y verificación de
-    // email). Activo por defecto salvo en test, donde se activa explícitamente.
+    // Rate limit estricto de los endpoints sensibles (reset, verificación y
+    // cambio de email). Activo por defecto salvo en test, donde se activa.
     SENSITIVE_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),
     SENSITIVE_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
     SENSITIVE_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
+    // Rate limit general de las rutas de negocio (/users y /admin). Más holgado
+    // que el de auth: frena el abuso sin estorbar el uso normal de la UI.
+    API_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),
+    API_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
+    API_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(1),
     // Email transaccional con Resend. Sin clave, en desarrollo se imprime el correo
     // en consola en vez de enviarlo; en producción es obligatoria.
     RESEND_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),

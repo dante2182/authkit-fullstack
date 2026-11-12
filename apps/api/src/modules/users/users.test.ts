@@ -75,7 +75,10 @@ describe('DELETE /api/users/me', () => {
   it('borra la cuenta, sus sesiones y expira la cookie', async () => {
     const cookie = await registerAndGetCookie()
 
-    const response = await request(app).delete('/api/users/me').set('Cookie', cookie)
+    const response = await request(app)
+      .delete('/api/users/me')
+      .set('Cookie', cookie)
+      .send({ password: credentials.password })
 
     expect(response.status).toBe(204)
     expect(getCookies(response).some((entry) => /Max-Age=0/i.test(entry))).toBe(true)
@@ -84,6 +87,29 @@ describe('DELETE /api/users/me', () => {
 
     const after = await request(app).get('/api/users/me').set('Cookie', cookie)
     expect(after.status).toBe(401)
+  })
+
+  it('exige la contraseña actual', async () => {
+    const cookie = await registerAndGetCookie()
+
+    const response = await request(app).delete('/api/users/me').set('Cookie', cookie)
+
+    expect(response.status).toBe(422)
+    expect(await prisma.user.count()).toBe(1)
+  })
+
+  it('rechaza una contraseña incorrecta sin borrar nada', async () => {
+    const cookie = await registerAndGetCookie()
+
+    const response = await request(app)
+      .delete('/api/users/me')
+      .set('Cookie', cookie)
+      .send({ password: 'ContraseñaEquivocada123!' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error.code).toBe('INVALID_PASSWORD')
+    expect(await prisma.user.count()).toBe(1)
+    expect(await prisma.session.count()).toBe(1)
   })
 
   it('requiere sesión', async () => {
