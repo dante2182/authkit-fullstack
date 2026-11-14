@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { z } from 'zod'
+import { parseCorsOrigins } from './cors-origins.js'
 
 // `.env` trae `CLAVE=` como string vacío, no undefined: se normaliza a undefined antes de validar.
 const emptyToUndefined = (value: unknown) =>
@@ -25,7 +26,7 @@ export const envSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(4000),
     DATABASE_URL: z.url(),
-    CORS_ORIGIN: z.url().default('http://localhost:5173'),
+    CORS_ORIGIN: z.string().default('http://localhost:5173').transform(parseCorsOrigins),
     BETTER_AUTH_SECRET: z.string().min(32, 'Debe tener al menos 32 caracteres'),
     BETTER_AUTH_URL: z.url(),
     // Modo de autenticación: credenciales y proveedores son independientes; el registro

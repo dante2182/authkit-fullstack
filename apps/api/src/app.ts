@@ -68,8 +68,8 @@ function forceCallbackURL(callbackURL: string) {
   }
 }
 
-app.use('/api/auth/verify-email', forceCallbackURL(`${env.CORS_ORIGIN}/verify-email`))
-app.use('/api/auth/reset-password', forceCallbackURL(`${env.CORS_ORIGIN}/reset-password`))
+app.use('/api/auth/verify-email', forceCallbackURL(`${env.CORS_ORIGIN[0]}/verify-email`))
+app.use('/api/auth/reset-password', forceCallbackURL(`${env.CORS_ORIGIN[0]}/reset-password`))
 
 // Better-Auth nativo: debe montarse ANTES de express.json() o el parser consume el body crudo.
 app.use('/api/auth', authRateLimit)

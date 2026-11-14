@@ -23,7 +23,7 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   basePath: '/api/auth',
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [env.CORS_ORIGIN],
+  trustedOrigins: env.CORS_ORIGIN,
   emailAndPassword: {
     enabled: env.AUTH_EMAIL_PASSWORD_ENABLED,
     // Registro cerrado: los usuarios existentes siguen entrando con contraseña.
