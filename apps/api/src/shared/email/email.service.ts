@@ -43,10 +43,8 @@ export const emailService = {
       return
     }
 
-    // Sin clave (desarrollo y tests): no se envía nada. En desarrollo se registra
-    // solo el asunto y el destinatario: nunca el cuerpo, que contiene el enlace
-    // con el token. En producción esta rama es inalcanzable (RESEND_API_KEY es
-    // obligatoria al arrancar).
+    // Sin clave (desarrollo y tests) se registra solo asunto y destinatario, nunca el
+    // cuerpo con el token. En producción es inalcanzable (RESEND_API_KEY obligatoria).
     if (env.NODE_ENV === 'development') {
       console.info(`[email] ${message.subject} → ${message.to}`)
     }

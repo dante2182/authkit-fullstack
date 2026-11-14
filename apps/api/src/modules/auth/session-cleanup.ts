@@ -21,9 +21,8 @@ async function runCleanup(): Promise<void> {
   }
 }
 
-// Ejecuta una limpieza al arrancar y luego cada SESSION_CLEANUP_INTERVAL_MINUTES.
-// Se usa setInterval (sin dependencias) porque hay una única tarea diaria y no
-// se necesitan expresiones cron ni concurrencia.
+// Limpia al arrancar y luego cada SESSION_CLEANUP_INTERVAL_MINUTES con setInterval:
+// una única tarea diaria no necesita cron ni concurrencia.
 export function startSessionCleanup(): NodeJS.Timeout | null {
   if (env.NODE_ENV === 'test') return null
 

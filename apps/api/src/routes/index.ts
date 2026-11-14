@@ -16,5 +16,4 @@ router.use('/config', configRouter)
 router.use('/users', usersRouter)
 router.use('/admin', adminRouter)
 
-// Rutas de apoyo que solo existen en el entorno de test.
 if (env.NODE_ENV === 'test') router.use('/test', testOnlyRouter)

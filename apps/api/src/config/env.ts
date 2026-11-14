@@ -1,22 +1,18 @@
 import 'dotenv/config'
 import { z } from 'zod'
 
-// `.env` suele traer variables opcionales como `CLAVE=`. Para Zod eso es un
-// string vacío, no `undefined`, así que `.optional()` no basta. Se normaliza
-// antes de validar: vacío equivale a no definido.
+// `.env` trae `CLAVE=` como string vacío, no undefined: se normaliza a undefined antes de validar.
 const emptyToUndefined = (value: unknown) =>
   typeof value === 'string' && value.trim() === '' ? undefined : value
 
-// Interpreta "true"/"false" como booleano real (z.coerce.boolean trataría
-// la cadena "false" como true).
+// z.coerce.boolean trataría "false" como true; esto lo interpreta como booleano real.
 const booleanFlag = (defaultValue: 'true' | 'false') =>
   z
     .enum(['true', 'false'])
     .default(defaultValue)
     .transform((value) => value === 'true')
 
-// Igual que booleanFlag, pero una variable vacía (`FLAG=`) equivale a ausente y
-// toma el default en vez de romper el arranque.
+// Como booleanFlag, pero `FLAG=` vacío toma el default en vez de romper el arranque.
 const optionalBooleanFlag = (defaultValue: 'true' | 'false') =>
   z.preprocess(emptyToUndefined, booleanFlag(defaultValue))
 
@@ -24,7 +20,6 @@ const optionalBooleanFlag = (defaultValue: 'true' | 'false') =>
 const optionalPositiveInt = (defaultValue: number) =>
   z.preprocess(emptyToUndefined, z.coerce.number().int().positive().default(defaultValue))
 
-// Esquema único: valida y tipa el entorno antes de arrancar.
 export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -33,53 +28,40 @@ export const envSchema = z
     CORS_ORIGIN: z.url().default('http://localhost:5173'),
     BETTER_AUTH_SECRET: z.string().min(32, 'Debe tener al menos 32 caracteres'),
     BETTER_AUTH_URL: z.url(),
-    // Modo de autenticación. Cada proyecto derivado elige con qué se entra:
-    //   credenciales on + proveedores  → ambos (default)
-    //   credenciales on + sin parejas  → solo email/contraseña
-    //   credenciales off + una pareja  → solo proveedores sociales
-    // El registro se cierra con AUTH_SIGN_UP_ENABLED=false (paneles internos).
+    // Modo de autenticación: credenciales y proveedores son independientes; el registro
+    // se cierra con AUTH_SIGN_UP_ENABLED=false (paneles internos).
     AUTH_EMAIL_PASSWORD_ENABLED: optionalBooleanFlag('true'),
     AUTH_SIGN_UP_ENABLED: optionalBooleanFlag('true'),
-    // Exige verificar el email antes de iniciar sesión con credenciales.
-    // Default false: un email mal escrito no debe dejar al usuario sin acceso.
+    // Exige verificar el email para entrar con credenciales. Default false: no bloquear un email mal escrito.
     AUTH_REQUIRE_EMAIL_VERIFICATION: optionalBooleanFlag('false'),
-    // Proveedores sociales. Cada pareja es opcional, pero no se admite media
-    // pareja: con solo el client id better-auth falla al construir la URL.
+    // Cada pareja es opcional, pero media pareja falla al construir la URL de better-auth.
     GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     GITHUB_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     GITHUB_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
-    // Valor de `trust proxy` de Express. Ver parseTrustProxy en app.ts:
-    //   false        → sin proxy delante (default seguro)
-    //   1            → un salto (Vercel, Render, Railway, Fly.io, un Nginx)
-    //   1,2          → varios saltos
-    //   10.0.0.0/8   → lista de IPs/CIDR de confianza
+    // Valor de `trust proxy`: false sin proxy, 1 un salto (Vercel, Render...), 1,2 varios
+    // saltos, o lista de IPs/CIDR. Ver parseTrustProxy en app.ts.
     TRUST_PROXY: z.string().default('false'),
     // Minutos entre limpiezas de sesiones expiradas (default: 1 día).
     SESSION_CLEANUP_INTERVAL_MINUTES: z.coerce.number().int().positive().default(1440),
-    // Duración de la sesión y frecuencia de renovación, en segundos.
-    // Defaults de better-auth: 7 días de vida y renovación cada día.
+    // Duración y renovación en segundos. Defaults de better-auth: 7 días y 1 día.
     SESSION_EXPIRES_IN: optionalPositiveInt(604800),
     SESSION_UPDATE_AGE: optionalPositiveInt(86400),
     // Nivel de logs de pino. En test se silencia para no ensuciar la salida.
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default(process.env.NODE_ENV === 'test' ? 'silent' : 'info'),
-    // Email del usuario que `pnpm admin:bootstrap` promueve a ADMIN.
-    // Vacío en .env equivale a no definido (el script falla con un mensaje claro).
+    // Email que `pnpm admin:bootstrap` promueve a ADMIN; vacío equivale a no definido.
     ADMIN_EMAIL: z.preprocess(emptyToUndefined, z.email().optional()),
-    // Rate limit estricto de los endpoints sensibles (reset, verificación y
-    // cambio de email). Activo por defecto salvo en test, donde se activa.
+    // Rate limit estricto de endpoints sensibles; activo salvo en test, donde se activa por env.
     SENSITIVE_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),
     SENSITIVE_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
     SENSITIVE_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
-    // Rate limit general de las rutas de negocio (/users y /admin). Más holgado
-    // que el de auth: frena el abuso sin estorbar el uso normal de la UI.
+    // Rate limit general de /users y /admin, más holgado que el de auth.
     API_RATE_LIMIT_ENABLED: booleanFlag(process.env.NODE_ENV === 'test' ? 'false' : 'true'),
     API_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
     API_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(1),
-    // Email transaccional con Resend. Sin clave, en desarrollo se imprime el correo
-    // en consola en vez de enviarlo; en producción es obligatoria.
+    // Sin clave, en desarrollo se imprime el correo en consola; en producción es obligatoria.
     RESEND_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     EMAIL_FROM: z.string().min(1).default('AuthKit <no-reply@authkit.local>'),
   })
@@ -101,8 +83,7 @@ export const envSchema = z
       if (id && secret) hasCompleteProvider = true
     }
 
-    // Sin credenciales y sin proveedor la API arrancaría sin ninguna forma de
-    // entrar: es un error de configuración, no un modo válido.
+    // Sin credenciales y sin proveedor la API no tendría forma de entrar: error de configuración.
     if (!value.AUTH_EMAIL_PASSWORD_ENABLED && !hasCompleteProvider) {
       ctx.addIssue({
         code: 'custom',

@@ -58,8 +58,7 @@ export function PasswordForm({ onOtherSessionsRevoked }: PasswordFormProps) {
         revokeOtherSessions: values.revokeOtherSessions,
       })
 
-      // Con revokeOtherSessions la API emite una cookie nueva; releer la sesión
-      // confirma que el navegador la aceptó.
+      // Con revokeOtherSessions la API emite una cookie nueva; releer la sesión confirma que el navegador la aceptó.
       if (values.revokeOtherSessions) {
         await refreshSession()
         onOtherSessionsRevoked?.()

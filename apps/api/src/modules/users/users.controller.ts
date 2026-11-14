@@ -35,8 +35,7 @@ export const deleteMe: RequestHandler = async (req, res) => {
 
   await usersService.remove(req.auth!.user.id)
 
-  // El usuario y sus sesiones ya no existen (cascade), así que signOut solo
-  // aporta el Set-Cookie que expira la cookie del navegador.
+  // El usuario y sus sesiones ya no existen (cascade), así que signOut solo aporta el Set-Cookie que expira la cookie del navegador.
   const response = await auth.api.signOut({
     headers: fromNodeHeaders(req.headers),
     asResponse: true,

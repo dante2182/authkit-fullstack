@@ -33,8 +33,7 @@ export const authService = {
     return request<SocialSignInResponse>('/auth/sign-in/social', { method: 'POST', body: input })
   },
 
-  // Contrato público de la API: qué métodos de acceso están activos en este
-  // despliegue. Se lee una vez al arrancar.
+  // Contrato público de la API: qué métodos de acceso están activos en este despliegue. Se lee una vez al arrancar.
   getAuthCapabilities() {
     return request<AuthCapabilities>('/config/auth')
   },

@@ -2,9 +2,8 @@ import { Role } from '../../generated/prisma/enums.js'
 
 export type { Role }
 
-// Fuente única de verdad de la autorización de la plantilla.
-// Para añadir un permiso: agrégalo a PERMISSIONS y concédelo en ROLE_PERMISSIONS.
-// Para añadir un rol: amplía el enum Role de Prisma y mapea el rol aquí.
+// Fuente única de verdad de la autorización: añade permisos a PERMISSIONS y roles
+// al enum Role de Prisma, y mapea ambos en ROLE_PERMISSIONS.
 export const PERMISSIONS = {
   ADMIN_USERS_READ: 'admin.users.read',
   ADMIN_USERS_ROLES_UPDATE: 'admin.users.roles.update',
@@ -12,8 +11,7 @@ export const PERMISSIONS = {
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]
 
-// Record<Role, ...> a propósito: si el enum crece y falta el mapeo, el
-// typecheck falla. Un rol sin permisos asignados se deniega siempre.
+// Record<Role, ...> a propósito: si el enum crece y falta el mapeo, el typecheck falla.
 export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
   [Role.ADMIN]: Object.values(PERMISSIONS),
   [Role.USER]: [],
@@ -42,8 +40,7 @@ export function hasPermission(role: Role, permission: Permission): boolean {
   return permissionsFor(role).includes(permission)
 }
 
-// True cuando el rol destino pierde algún permiso del origen.
-// Se usa para revocar las sesiones al quitar privilegios.
+// True cuando el rol destino pierde algún permiso del origen. Se usa para revocar las sesiones al quitar privilegios.
 export function losesPrivileges(from: Role, to: Role): boolean {
   const next = permissionsFor(to)
   return permissionsFor(from).some((permission) => !next.includes(permission))

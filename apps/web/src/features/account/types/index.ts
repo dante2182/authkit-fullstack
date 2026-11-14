@@ -5,11 +5,9 @@ import type { AuthSession, AuthUser } from '@/features/auth'
 
 export type { AuthUser }
 
-// La forma de sesión ya está en el contrato de auth; se reutiliza tal cual.
 export type AccountSession = AuthSession
 
-// PATCH /api/users/me devuelve la selección pública del usuario, que no incluye
-// `role` (ese campo solo llega por la sesión).
+// PATCH /api/users/me devuelve la selección pública del usuario, que no incluye `role` (ese campo solo llega por la sesión).
 export type PublicUser = Omit<AuthUser, 'role'>
 
 export interface UpdateProfileInput {

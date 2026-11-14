@@ -5,8 +5,7 @@ import { AuthContext } from '../context/auth-context'
 import { authService } from '../services/auth.service'
 import type { AuthUser } from '../types'
 
-// Un 401 al llamar a endpoints con sesión obligatoria es el estado normal de
-// un visitante anónimo. /get-session ya devuelve 200 con null.
+// Un 401 al llamar a endpoints con sesión obligatoria es el estado normal de un visitante anónimo. /get-session ya devuelve 200 con null.
 function isAnonymousSession(error: unknown): boolean {
   return error instanceof ApiError && error.status === 401
 }
@@ -42,9 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Se usa después de login, registro o verificación de email para validar la
-  // cookie recién emitida contra la API. Devuelve null si no hay sesión, para
-  // que quien llama pueda distinguir "sin sesión" de "sesión confirmada".
+  // Valida la cookie recién emitida tras login, registro o verificación. Devuelve null
+  // si no hay sesión, para distinguir "sin sesión" de "sesión confirmada".
   const refreshSession = useCallback(async (): Promise<AuthUser | null> => {
     try {
       const session = await authService.getSession()
@@ -62,9 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Logout optimista: el usuario siempre sale de la vista local, aunque el
-  // servidor no responda. El fallo se registra y, si la cookie httpOnly sigue
-  // viva, se invalidará al expirar o en un logout posterior.
+  // Logout optimista: el usuario sale de la vista local aunque el servidor no responda.
+  // Si la cookie httpOnly sigue viva, se invalidará al expirar o en otro logout.
   const signOut = useCallback(async () => {
     try {
       await authService.logout()
@@ -78,9 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Sesión invalidada desde fuera (caducada o revocada en otra pestaña): el
-  // cliente HTTP avisa y aquí se limpia el usuario. No hace falta llamar al
-  // backend: la cookie ya no sirve. ProtectedRoute se ocupa de la redirección.
+  // Sesión invalidada desde fuera (caducada o revocada en otra pestaña): el cliente
+  // HTTP avisa y aquí se limpia el usuario; la cookie ya no sirve.
   useEffect(() => {
     const handleUnauthorized = () => setUser(null)
     window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)

@@ -59,8 +59,7 @@ function listResponse(items = users) {
   })
 }
 
-// La sesión llega por red con el AuthProvider real: la página no recibe un
-// usuario inyectado, tiene que resolverlo como en producción.
+// La sesión llega por red con el AuthProvider real: la página no recibe un usuario inyectado, tiene que resolverlo como en producción.
 function renderAdminUsers(): void {
   server.use(http.get(`${API}/auth/get-session`, () => HttpResponse.json(session)))
 

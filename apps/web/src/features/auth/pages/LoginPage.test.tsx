@@ -39,8 +39,7 @@ function sessionBody(): SessionResponse {
   }
 }
 
-// La pantalla se prueba con los providers reales: el contrato de capacidades y
-// la sesión llegan por red (MSW), igual que en la aplicación.
+// La pantalla se prueba con los providers reales: el contrato de capacidades y la sesión llegan por red (MSW), igual que en la aplicación.
 function renderLogin({
   capabilities = openCapabilities,
   sessionInitially = false,

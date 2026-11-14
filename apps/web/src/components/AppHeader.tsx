@@ -6,7 +6,6 @@ import { useAuth } from '@/features/auth'
 const NAV_LINK_CLASS =
   'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
 
-// Cabecera compartida por el dashboard y la cuenta.
 export function AppHeader() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()

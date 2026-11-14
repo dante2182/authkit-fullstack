@@ -1,5 +1,4 @@
-// Contrato del módulo admin de la API. Solo campos públicos: nunca datos de
-// Account (password, tokens OAuth...).
+// Contrato del módulo admin de la API. Solo campos públicos: nunca datos de Account (password, tokens OAuth...).
 
 import type { UserRole } from '@/features/auth'
 

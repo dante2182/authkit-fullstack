@@ -1,5 +1,4 @@
-// Tipos del contrato de autenticación. Reflejan lo que devuelve apps/api,
-// donde el token de sesión vive únicamente en la cookie httpOnly.
+// Tipos del contrato de autenticación. Reflejan lo que devuelve apps/api, donde el token de sesión vive únicamente en la cookie httpOnly.
 
 export type UserRole = 'USER' | 'ADMIN'
 
@@ -58,7 +57,6 @@ export interface AuthCapabilities {
     enabled: boolean
     signUpEnabled: boolean
   }
-  // Ids tal cual los devuelve la API (hoy: google, github).
   socialProviders: string[]
 }
 
