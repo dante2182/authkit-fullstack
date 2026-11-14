@@ -18,15 +18,15 @@ Plan: `docs/superpowers/plans/2026-11-14-deployability.md`.
 
 ## Tasks
 
-| ID  | Specs | Ruta   | Estado    | Evidencia                                                  |
-| --- | ----- | ------ | --------- | ---------------------------------------------------------- |
-| T1  | S1    | inline | hecho     | `cors-origins.test.ts` 5/5; suite 158/158; `pnpm check` OK |
-| T2  | S2    | inline | pendiente | —                                                          |
-| T3  | S3    | inline | pendiente | —                                                          |
-| T4  | S4    | inline | pendiente | —                                                          |
-| T5  | S5    | inline | pendiente | —                                                          |
-| T6  | S6    | inline | pendiente | —                                                          |
-| T7  | S7    | inline | pendiente | —                                                          |
+| ID  | Specs | Ruta   | Estado | Evidencia                                                                               |
+| --- | ----- | ------ | ------ | --------------------------------------------------------------------------------------- |
+| T1  | S1    | inline | hecho  | `cors-origins.test.ts` 5/5; suite 158/158; `pnpm check` OK                              |
+| T2  | S2    | inline | hecho  | `cookies.test.ts` 5/5 + `cookie-attributes.test.ts` 1/1; suite 164/164; `pnpm check` OK |
+| T3  | S3    | inline | hecho  | `env.production.test.ts` 4/4; suite 168/168; `pnpm check` OK                            |
+| T4  | S4    | inline | hecho  | `request-id.test.ts` 2/2; suite 170/170; `pnpm check` OK                                |
+| T5  | S5    | inline | hecho  | probes en verde en local (6/6 y 15/15); `ci.yml` con los dos pasos                      |
+| T6  | S6    | inline | hecho  | `vercel.json`, `_redirects`, `deploy/nginx.conf.example`, `deploy/README.md`; build OK  |
+| T7  | S7    | inline | hecho  | README «Despliegue» + ambos `.env.example`; `pnpm check` + build + suite OK             |
 
 ## Log
 
