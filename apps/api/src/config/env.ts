@@ -29,6 +29,11 @@ export const envSchema = z
     CORS_ORIGIN: z.string().default('http://localhost:5173').transform(parseCorsOrigins),
     BETTER_AUTH_SECRET: z.string().min(32, 'Debe tener al menos 32 caracteres'),
     BETTER_AUTH_URL: z.url(),
+    // Cookie de sesión: `sameSite: none` es obligatorio con web y API en dominios distintos.
+    COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+    COOKIE_SECURE: optionalBooleanFlag(process.env.NODE_ENV === 'production' ? 'true' : 'false'),
+    // Solo para compartir cookie entre subdominios del mismo dominio padre (.example.com).
+    COOKIE_DOMAIN: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     // Modo de autenticación: credenciales y proveedores son independientes; el registro
     // se cierra con AUTH_SIGN_UP_ENABLED=false (paneles internos).
     AUTH_EMAIL_PASSWORD_ENABLED: optionalBooleanFlag('true'),
@@ -91,6 +96,18 @@ export const envSchema = z
         path: ['AUTH_EMAIL_PASSWORD_ENABLED'],
         message:
           'Sin email/contraseña hace falta al menos un proveedor social completo (GOOGLE_* o GITHUB_*)',
+      })
+    }
+
+    if (
+      value.COOKIE_SAME_SITE === 'none' &&
+      !value.COOKIE_SECURE &&
+      value.NODE_ENV !== 'production'
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['COOKIE_SAME_SITE'],
+        message: 'COOKIE_SAME_SITE=none exige COOKIE_SECURE=true',
       })
     }
 
