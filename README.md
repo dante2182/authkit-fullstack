@@ -47,6 +47,68 @@ pnpm --filter api admin:bootstrap
 - Web: http://localhost:5173
 - API: http://localhost:4000
 
+## Despliegue
+
+La plantilla no incluye Docker: cada usuario despliega la web y la API donde prefiera. Hay dos topologías válidas.
+
+**Mismo dominio (recomendada).** Un proxy sirve la web en `https://example.com` y la API en `https://example.com/api`. No hay CORS entre sitios ni cookies de terceros.
+
+**Dominios separados.** La web en `https://app.example.com` y la API en `https://api.example.com`. Exige CORS con credenciales y cookies `SameSite=None; Secure`.
+
+### Variables obligatorias
+
+| Variable             | Dónde | Qué valor                                                                              |
+| -------------------- | ----- | -------------------------------------------------------------------------------------- |
+| `DATABASE_URL`       | api   | PostgreSQL accesible desde la API.                                                     |
+| `BETTER_AUTH_SECRET` | api   | 32 bytes aleatorios (`openssl rand -base64 32`).                                       |
+| `BETTER_AUTH_URL`    | api   | Origen de la API, sin `/api`. Debe ser `https://` en producción.                       |
+| `CORS_ORIGIN`        | api   | Origen(es) del frontend, separados por comas. El primero recibe los enlaces de correo. |
+| `RESEND_API_KEY`     | api   | Obligatoria en producción: sin ella no salen reset ni verificación.                    |
+| `EMAIL_FROM`         | api   | Remitente con dominio verificado en Resend.                                            |
+| `TRUST_PROXY`        | api   | Saltos de proxy delante de la API (`1` en Vercel, Render, Railway o un Nginx).         |
+| `VITE_API_URL`       | web   | URL de la API **incluyendo** `/api`. Se inyecta en build.                              |
+
+`NODE_ENV=production` activa validaciones de arranque: la API no arranca si `BETTER_AUTH_URL` o algún origen de `CORS_ORIGIN` no usa `https://` o apunta a `localhost`.
+
+### Cookies según topología
+
+| Topología                           | `COOKIE_SAME_SITE` | `COOKIE_SECURE` | `COOKIE_DOMAIN` |
+| ----------------------------------- | ------------------ | --------------- | --------------- |
+| Mismo dominio                       | `lax` (default)    | `true`          | vacío           |
+| Subdominios del mismo dominio padre | `lax`              | `true`          | `.example.com`  |
+| Dominios distintos                  | `none`             | `true`          | vacío           |
+
+`SameSite=None` sin `Secure` es error de arranque: el navegador descartaría la cookie en silencio.
+
+### Pasos
+
+```bash
+# 1. Dependencias y build
+pnpm install --frozen-lockfile
+pnpm build
+
+# 2. Migraciones (nunca `db:migrate` en producción)
+pnpm --filter api db:deploy
+
+# 3. Arrancar la API
+pnpm --filter api start
+
+# 4. Publicar el frontend: apps/web/dist
+#    Ver deploy/ para el fallback SPA de Vercel, Netlify y Nginx.
+```
+
+El frontend es un SPA: el hosting debe devolver `index.html` con estado 200 en las rutas que no son ficheros. Sin eso, un F5 en `/account` da 404. Detalle en [`deploy/README.md`](deploy/README.md).
+
+### Checklist de humo tras desplegar
+
+1. `GET /health` responde `status: "ok"` con `database: "up"`.
+2. Registro con email y contraseña.
+3. Verificación de email: el enlace abre `https://<web>/verify-email`.
+4. Login, recarga de la página y sesión viva.
+5. OAuth con Google y con GitHub.
+6. Reset de contraseña completo.
+7. `admin:bootstrap` y acceso a `/admin/users`.
+
 ## API (`apps/api`)
 
 Todas las rutas públicas cuelgan de `/api`. La única excepción es la sonda de
