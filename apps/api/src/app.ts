@@ -18,6 +18,7 @@ import { healthRouter } from './modules/health/health.routes.js'
 import { router } from './routes/index.js'
 import { errorHandler } from './shared/errors/error-handler.js'
 import { notFoundHandler } from './shared/middlewares/not-found.js'
+import { requestId } from './shared/middlewares/request-id.js'
 
 // `true` se rechaza: confiar en cualquier proxy permite falsificar la IP y saltarse el rate limit.
 export function parseTrustProxy(value: string): boolean | number | string[] {
@@ -50,6 +51,7 @@ app.set('trust proxy', trustProxy)
 app.disable('x-powered-by')
 
 app.use(helmet())
+app.use(requestId)
 app.use(cors(corsOptions))
 
 // Fija el callback de los enlaces: sin esto un callbackURL manipulado redirige fuera del sitio.
