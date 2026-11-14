@@ -25,3 +25,13 @@ describe('parseCorsOrigins', () => {
     expect(() => parseCorsOrigins(' , ')).toThrow(/al menos un origen/i)
   })
 })
+
+describe('parseCorsOrigins normalización', () => {
+  it('quita la barra final para que coincida con el header Origin', () => {
+    expect(parseCorsOrigins('https://app.example.com/')).toEqual(['https://app.example.com'])
+  })
+
+  it('rechaza un origen con ruta: no es un origen', () => {
+    expect(() => parseCorsOrigins('https://app.example.com/app')).toThrow(/origen/i)
+  })
+})

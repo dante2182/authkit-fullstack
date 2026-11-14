@@ -13,6 +13,7 @@ El router es de cliente (`createBrowserRouter`), así que **el hosting debe devo
 
 Notas:
 
+- En Vercel, `vercel.json` solo se aplica si el **Root Directory** del proyecto es `apps/web`. Si despliegas el monorepo desde la raíz, copia el rewrite a un `vercel.json` de la raíz con el `destination` ajustado.
 - El fallback debe ser **200**, no 301 ni 302. Un redirect cambia la URL y rompe los enlaces profundos.
 - Los assets de `/assets/` llevan hash en el nombre: se pueden cachear un año.
 - `VITE_API_URL` se inyecta en tiempo de build. Si cambia la URL de la API, hay que reconstruir.

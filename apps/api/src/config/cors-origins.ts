@@ -21,6 +21,11 @@ export function parseCorsOrigins(value: string): string[] {
       throw new Error(`CORS_ORIGIN contiene un origen inválido: "${origin}"`)
     }
 
-    return origin
+    if (parsed.pathname !== '/' || parsed.search !== '' || parsed.hash !== '') {
+      throw new Error(`CORS_ORIGIN espera un origen sin ruta: "${origin}"`)
+    }
+
+    // `parsed.origin` normaliza mayúsculas y quita la barra final del origen.
+    return parsed.origin
   })
 }

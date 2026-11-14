@@ -19,7 +19,7 @@ export const requestId: RequestHandler = (req, res, next) => {
       {
         requestId: id,
         method: req.method,
-        url: req.originalUrl,
+        url: req.originalUrl.split('?')[0],
         status: res.statusCode,
         durationMs: Date.now() - startedAt,
       },
