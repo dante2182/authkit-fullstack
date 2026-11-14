@@ -19,9 +19,7 @@ import { router } from './routes/index.js'
 import { errorHandler } from './shared/errors/error-handler.js'
 import { notFoundHandler } from './shared/middlewares/not-found.js'
 
-// Traduce TRUST_PROXY al valor que espera Express.
-// `true` se rechaza: confiar en cualquier proxy permite falsificar la IP y
-// saltarse el rate limit (express-rate-limit lo bloquea en tiempo de petición).
+// `true` se rechaza: confiar en cualquier proxy permite falsificar la IP y saltarse el rate limit.
 export function parseTrustProxy(value: string): boolean | number | string[] {
   const trimmed = value.trim()
 
@@ -54,9 +52,7 @@ app.disable('x-powered-by')
 app.use(helmet())
 app.use(cors(corsOptions))
 
-// Fija el callback de los enlaces de correo al frontend configurado. better-auth
-// acepta cualquier callbackURL; sin esta guarda un enlace manipulado podría
-// redirigir fuera del sitio. Se reescribe la query antes del handler nativo.
+// Fija el callback de los enlaces: sin esto un callbackURL manipulado redirige fuera del sitio.
 function forceCallbackURL(callbackURL: string) {
   return (req: express.Request, _res: express.Response, next: express.NextFunction): void => {
     if (req.method !== 'GET') {
@@ -75,14 +71,9 @@ function forceCallbackURL(callbackURL: string) {
 app.use('/api/auth/verify-email', forceCallbackURL(`${env.CORS_ORIGIN}/verify-email`))
 app.use('/api/auth/reset-password', forceCallbackURL(`${env.CORS_ORIGIN}/reset-password`))
 
-// Better-Auth nativo. Debe montarse ANTES de express.json(): toNodeHandler lee
-// el cuerpo crudo de la petición, y un parser previo lo consumiría (body vacío).
-// Rutas nativas: /sign-up/email, /sign-in/email, /sign-out, /get-session,
-// /callback/:provider, /request-password-reset, /reset-password, etc.
+// Better-Auth nativo: debe montarse ANTES de express.json() o el parser consume el body crudo.
 app.use('/api/auth', authRateLimit)
-// El límite por email necesita el cuerpo parseado. better-call reutiliza
-// `req.body` cuando el stream ya se consumió, así que el handler nativo sigue
-// recibiendo el mismo JSON. Se monta por ruta para no tocar el resto de /auth.
+// El límite por email necesita el body; better-call reutiliza req.body, así que el handler nativo sigue viendo el mismo JSON.
 const parseSensitiveBody = express.json()
 app.use(
   '/api/auth/request-password-reset',
@@ -102,9 +93,7 @@ app.use(
   sensitiveIpRateLimit,
   sensitiveEmailRateLimit,
 )
-// El cambio de email envía correos al buzón nuevo: mismo límite que el resto de
-// rutas que disparan un envío, pero con clave `newEmail`. Un `email` de señuelo
-// en el body no mueve el cubo.
+// change-email limita por newEmail: un email de señuelo en el body no mueve el cubo.
 app.use(
   '/api/auth/change-email',
   parseSensitiveBody,
@@ -118,8 +107,7 @@ app.use(express.json())
 // Sonda de infraestructura fuera de /api: el balanceador no debe depender del prefijo público.
 app.use('/health', healthRouter)
 
-// Límite general de negocio. Se monta antes del router para contar también las
-// peticiones sin sesión: si no, un atacante podría inundar los 401 gratis.
+// Límite general antes del router para contar también las peticiones sin sesión.
 app.use('/api/users', usersRateLimit)
 app.use('/api/admin', adminRateLimit)
 

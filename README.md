@@ -78,10 +78,9 @@ del prefijo de la API.
 | GET    | `/api/admin/users`                  | Cookie | Lista usuarios paginada, con búsqueda parcial por `email` (ADMIN verificado) |
 | PATCH  | `/api/admin/users/:id/role`         | Cookie | Cambia el rol de un usuario (ADMIN verificado)                               |
 
-`/api/auth/*` lo sirve el handler nativo de better-auth (`toNodeHandler(auth)`),
-montado en `src/app.ts` **antes** de `express.json()` para que el body llegue intacto.
-`BETTER_AUTH_URL` es el origen sin prefijo (`http://localhost:4000`): better-auth añade
-`/api/auth` con `basePath`.
+`/api/auth/*` lo sirve el handler nativo de better-auth. `BETTER_AUTH_URL` es el
+origen sin prefijo (`http://localhost:4000`): better-auth añade `/api/auth` con
+`basePath`.
 
 ### Proveedores sociales (Google y GitHub)
 
@@ -174,9 +173,8 @@ prohibido porque permite falsificar la IP y saltarse el rate limit.
   dominio verificado, así que los enlaces de verificación, recuperación y cambio de
   correo no llegarían. Verificar el dominio (registros DNS en Resend) es un paso manual
   del despliegue: nada en el código lo valida.
-- `src/shared/email/email.service.ts` es el único punto de envío (fetch nativo contra
-  la API de Resend, sin SDK). Los tests lo sustituyen con `vi.mock`.
-- Las plantillas viven en `src/shared/email/templates.ts`.
+- El envío usa fetch nativo contra la API de Resend (sin SDK) y los tests lo sustituyen
+  con `vi.mock`.
 - Los callbacks de better-auth **no** esperan al envío: el correo sale en segundo plano
   y un fallo de Resend se registra sin romper la petición.
 - El correo de verificación se envía al registrarse pero **no** bloquea el login:
@@ -185,9 +183,9 @@ prohibido porque permite falsificar la IP y saltarse el rate limit.
 - El reset de contraseña revoca todas las sesiones del usuario
   (`revokeSessionsOnPasswordReset`).
 - Los enlaces del correo apuntan a la API (`/api/auth/...`). El destino de la
-  redirección se reescribe en `src/app.ts` al frontend configurado (`CORS_ORIGIN`):
-  un `callbackURL` manipulado en la query o en el body no puede desviar la
-  redirección. El frontend debe exponer las rutas `/reset-password` y `/verify-email`.
+  redirección se reescribe al frontend configurado (`CORS_ORIGIN`): un `callbackURL`
+  manipulado en la query o en el body no puede desviar la redirección. El frontend
+  debe exponer las rutas `/reset-password` y `/verify-email`.
 
 ### Exigir email verificado
 

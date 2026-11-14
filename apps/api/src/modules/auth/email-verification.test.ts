@@ -111,8 +111,7 @@ describe('registro con verificación de email', () => {
       .send({ email: credentials.email, callbackURL: 'https://evil.example/phishing' })
 
     expect(response.status).toBe(200)
-    // El callbackURL del correo se ignora al abrir el enlace: app.ts lo reescribe
-    // al origen configurado antes de llegar al handler nativo.
+    // El callbackURL del correo se ignora al abrir el enlace: app.ts lo reescribe al origen configurado antes de llegar al handler nativo.
     const emailUrl = new URL(lastEmailUrl())
     const token = emailUrl.searchParams.get('token')
     expect(token).toBeTruthy()

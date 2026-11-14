@@ -35,8 +35,7 @@ export function DeleteAccountSection() {
 
     try {
       await accountService.deleteAccount({ password })
-      // La cuenta y sus sesiones ya no existen: signOut solo limpia el estado
-      // local y expira la cookie que el backend invalidó.
+      // La cuenta y sus sesiones ya no existen: signOut solo limpia el estado local y expira la cookie que el backend invalidó.
       await signOut()
       // El toast se monta fuera del router, así que sobrevive a la navegación.
       toast.success('Tu cuenta se ha borrado.')

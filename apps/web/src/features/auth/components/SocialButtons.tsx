@@ -15,8 +15,7 @@ interface SocialButtonsProps {
   callbackURL: string
 }
 
-// Un botón por proveedor activo. La lista viene de la API: si un proveedor no
-// está configurado en el backend, aquí no existe.
+// Un botón por proveedor activo. La lista viene de la API: si un proveedor no está configurado en el backend, aquí no existe.
 export function SocialButtons({ providers, callbackURL }: SocialButtonsProps) {
   const [pending, setPending] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)

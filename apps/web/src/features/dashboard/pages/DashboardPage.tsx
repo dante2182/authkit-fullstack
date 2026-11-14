@@ -22,8 +22,7 @@ function InfoCard({ title, icon, children }: InfoCardProps) {
   )
 }
 
-// Destino mínimo tras el login: demuestra la sesión, el logout y la ruta
-// protegida. Las secciones reales se añadirán encima de esta base.
+// Destino mínimo tras el login: demuestra la sesión, el logout y la ruta protegida. Las secciones reales se añadirán encima de esta base.
 export function DashboardPage() {
   const { user } = useAuth()
 

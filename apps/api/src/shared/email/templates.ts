@@ -58,9 +58,8 @@ Si no creaste esta cuenta, ignora este correo.`,
   }
 }
 
-// Confirmación del cambio de dirección: se envía al correo ACTUAL, no al nuevo.
-// Quien controla el buzón nuevo no puede completar el cambio sin aprobarlo antes
-// desde la cuenta de la que se quiere salir.
+// Confirmación del cambio de dirección: se envía al correo ACTUAL, así que quien
+// controla el buzón nuevo no puede completar el cambio sin aprobarlo antes.
 export function emailChangeConfirmationEmail(
   recipient: EmailRecipient,
   newEmail: string,

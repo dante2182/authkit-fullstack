@@ -21,7 +21,6 @@ function isClientHttpError(err: unknown): err is { status: number } {
   return typeof status === 'number' && status >= 400 && status < 500
 }
 
-// Traduce cualquier error a la forma { error: { code, message, details? } }.
 export function errorHandler(
   err: unknown,
   _req: Request,

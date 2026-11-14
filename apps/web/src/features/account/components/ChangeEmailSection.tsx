@@ -11,9 +11,8 @@ const changeEmailSchema = z.object({
 
 type ChangeEmailValues = z.infer<typeof changeEmailSchema>
 
-// Cambio de correo en dos pasos: aquí solo se solicita. La dirección no cambia
-// hasta que se abre el enlace que llega al correo ACTUAL, así que una sesión
-// robada sin acceso al buzón no puede llevarse la cuenta.
+// Cambio de correo en dos pasos: aquí solo se solicita. La dirección no cambia hasta
+// abrir el enlace que llega al correo ACTUAL, así que una sesión robada no basta.
 export function ChangeEmailSection() {
   const { user } = useAuth()
   const [formError, setFormError] = useState<string | null>(null)
@@ -35,8 +34,7 @@ export function ChangeEmailSection() {
 
     try {
       await accountService.changeEmail({ newEmail: values.newEmail })
-      // Mensaje genérico a propósito: la API responde igual aunque la dirección
-      // ya pertenezca a otra cuenta (anti-enumeración).
+      // Mensaje genérico a propósito: la API responde igual aunque la dirección ya pertenezca a otra cuenta (anti-enumeración).
       setRequested(values.newEmail)
       reset()
     } catch (error) {

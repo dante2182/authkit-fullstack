@@ -1,4 +1,3 @@
-// Separador visual entre el formulario de credenciales y los proveedores.
 // Solo se pinta cuando ambos métodos están activos.
 export function AuthDivider() {
   return (

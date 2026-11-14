@@ -9,12 +9,10 @@ import { SettingsSection } from '../components/SettingsSection'
 import { accountService } from '../services/account.service'
 
 export function AccountPage() {
-  // Cambiar la contraseña con `revokeOtherSessions` invalida la sesión actual y
-  // emite un token nuevo. La lista de sesiones se remonta para no quedarse con
-  // el token muerto marcado como "Esta sesión".
+  // Cambiar la contraseña con `revokeOtherSessions` emite un token nuevo; la lista se
+  // remonta para no quedarse con el token muerto marcado como "Esta sesión".
   const [sessionsVersion, setSessionsVersion] = useState(0)
-  // null = comprobando. Un usuario solo-OAuth no tiene cuenta `credential` y no
-  // puede cambiar una contraseña que no existe.
+  // null = comprobando. Un usuario solo-OAuth no tiene cuenta `credential` ni contraseña.
   const [hasPassword, setHasPassword] = useState<boolean | null>(null)
 
   useEffect(() => {

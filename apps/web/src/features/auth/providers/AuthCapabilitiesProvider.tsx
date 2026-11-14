@@ -7,15 +7,12 @@ import type { AuthCapabilities } from '../types'
 const LOAD_ERROR =
   'No pudimos cargar los métodos de acceso. Revisa tu conexión e inténtalo de nuevo.'
 
-// Lee el contrato de la API una sola vez al arrancar y lo comparte. Es estado
-// independiente de la sesión: si falla, solo afecta a las pantallas de acceso;
-// las rutas protegidas siguen funcionando.
+// Lee el contrato una vez al arrancar y lo comparte. Es estado independiente de la sesión: si falla, solo afecta a las pantallas de acceso.
 export function AuthCapabilitiesProvider({ children }: { children: ReactNode }) {
   const [capabilities, setCapabilities] = useState<AuthCapabilities | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // Cambiar el contador relanza el efecto: así el reintento no hace setState
-  // síncrono dentro del efecto.
+  // Cambiar el contador relanza el efecto: así el reintento no hace setState síncrono dentro del efecto.
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {

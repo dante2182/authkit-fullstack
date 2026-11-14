@@ -4,9 +4,8 @@ import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 
-// Prueba de composición sin runner de tests: renderiza las páginas a HTML con
-// el contexto de capacidades simulado y comprueba qué se pinta en cada modo.
-// Uso: `pnpm --filter web test:composition` (desde la raíz del monorepo).
+// Prueba de composición sin runner de tests: renderiza las páginas a HTML con el contexto
+// de capacidades simulado y comprueba qué se pinta. Uso: `pnpm --filter web test:composition`.
 const here = path.dirname(fileURLToPath(import.meta.url))
 const webRoot = path.resolve(here, '..')
 const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'authkit-probe-'))

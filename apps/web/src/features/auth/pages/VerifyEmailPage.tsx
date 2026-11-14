@@ -5,16 +5,14 @@ import { AuthCard } from '../components/AuthCard'
 import { useAuth } from '../hooks/use-auth'
 import { linkErrorMessage } from '../lib/auth-errors'
 
-// La API valida el token y redirige aquí. Si todo fue bien no hay query;
-// si falla, llega `?error=INVALID_TOKEN|TOKEN_EXPIRED|...`.
+// La API valida el token y redirige aquí. Si todo fue bien no hay query; si falla, llega `?error=INVALID_TOKEN|TOKEN_EXPIRED|...`.
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
   const errorCode = searchParams.get('error')
   const { user, refreshSession } = useAuth()
 
   useEffect(() => {
-    // El token ya lo consumió la API: se refresca el usuario para reflejar
-    // `emailVerified: true` si esta sesión sigue abierta.
+    // El token ya lo consumió la API: se refresca el usuario para reflejar `emailVerified: true` si esta sesión sigue abierta.
     void refreshSession()
   }, [refreshSession])
 

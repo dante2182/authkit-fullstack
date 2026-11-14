@@ -22,13 +22,11 @@ interface RequestOptions extends Omit<RequestInit, 'body' | 'headers'> {
   headers?: Record<string, string>
 }
 
-// Evento con el que el cliente HTTP avisa de que la sesión dejó de valer.
-// AuthProvider lo escucha y limpia el usuario; los guards redirigen a /login.
+// Evento de sesión inválida: AuthProvider limpia el usuario y los guards redirigen a /login.
 export const UNAUTHORIZED_EVENT = 'authkit:unauthorized'
 
-// Rutas donde un 401 es una respuesta de negocio y NO una sesión inválida.
-// Solo el login con contraseña incorrecta: el resto de 401 de better-auth
-// significan que la cookie ya no vale.
+// Rutas donde un 401 es respuesta de negocio y NO sesión inválida. Solo el login con
+// contraseña incorrecta; el resto de 401 significa que la cookie ya no vale.
 const BUSINESS_401_PATHS = new Set(['/auth/sign-in/email'])
 
 function notifyUnauthorized(): void {
@@ -57,9 +55,8 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as ApiErrorBody | null
 
-    // Una petición autenticada que recibe 401 significa que la sesión caducó o
-    // fue revocada. Se avisa una sola vez por petición: AuthProvider limpia el
-    // usuario y ProtectedRoute redirige a /login conservando el destino.
+    // 401 en una petición autenticada: la sesión caducó o fue revocada. Se avisa una
+    // vez por petición; AuthProvider limpia el usuario y ProtectedRoute redirige a /login.
     if (response.status === 401 && !BUSINESS_401_PATHS.has(path)) notifyUnauthorized()
 
     throw new ApiError(response.status, errorBody)

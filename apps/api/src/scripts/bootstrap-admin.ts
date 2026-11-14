@@ -2,9 +2,8 @@ import { env } from '../config/env.js'
 import { prisma } from '../config/prisma.js'
 import { Role } from '../generated/prisma/enums.js'
 
-// Bootstrap del primer administrador de un proyecto derivado.
-// Sin endpoint HTTP a propósito: el rol ADMIN solo se concede desde la consola
-// del servidor (o desde este script). Es idempotente.
+// Bootstrap del primer administrador. Sin endpoint HTTP a propósito: el rol ADMIN
+// solo se concede desde la consola del servidor. Es idempotente.
 async function main(): Promise<void> {
   const email = env.ADMIN_EMAIL
 
@@ -41,9 +40,8 @@ async function main(): Promise<void> {
   warnIfUnverified(user.email, user.emailVerified)
 }
 
-// Las rutas /api/admin/* exigen email verificado (requireVerifiedEmail).
-// Sin RESEND_API_KEY el correo de verificación no se envía en desarrollo, así
-// que conviene avisar en vez de dejar al operador con un 403 inesperado.
+// /api/admin/* exige email verificado; sin RESEND_API_KEY no se envía en desarrollo,
+// así que se avisa en vez de dejar al operador con un 403 inesperado.
 function warnIfUnverified(email: string, emailVerified: boolean): void {
   if (emailVerified) return
 

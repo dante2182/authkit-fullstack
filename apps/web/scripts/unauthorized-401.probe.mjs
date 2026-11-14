@@ -4,9 +4,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 
-// Prueba de regresión del manejo global de 401, sin runner de navegador.
-// Carga el cliente HTTP real con Vite (SSR) y sustituye `fetch` para simular
-// respuestas. Mismo enfoque que auth-composition.probe.mjs: sin dependencias nuevas.
+// Prueba de regresión del manejo global de 401: carga el cliente HTTP real con Vite (SSR)
+// y sustituye `fetch`. Mismo enfoque que auth-composition.probe.mjs, sin dependencias nuevas.
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'authkit-401-'))
 

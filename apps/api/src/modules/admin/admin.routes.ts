@@ -7,7 +7,6 @@ import { changeRoleSchema, listUsersQuerySchema, userIdParamSchema } from './adm
 
 export const adminRouter: Router = Router()
 
-// Toda la superficie admin exige sesión válida y email verificado.
 adminRouter.use(requireAuth, requireVerifiedEmail)
 
 adminRouter.get(

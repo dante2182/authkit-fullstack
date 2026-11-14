@@ -16,9 +16,8 @@ export interface AuthCapabilities {
   socialProviders: SocialProviderId[]
 }
 
-// Credenciales crudas por proveedor. Se declaran aquí y en ningún otro sitio:
-// tanto el handler nativo de better-auth como el contrato público se derivan
-// de este mapa, así que es imposible que digan cosas distintas.
+// Credenciales crudas por proveedor, declaradas solo aquí: el handler nativo y el
+// contrato público se derivan de este mapa, así que no pueden divergir.
 const providerCredentials: Record<
   SocialProviderId,
   { clientId: string | undefined; clientSecret: string | undefined }

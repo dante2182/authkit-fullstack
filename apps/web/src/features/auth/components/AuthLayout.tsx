@@ -7,7 +7,6 @@ const highlights = [
   'Verificación de email y recuperación de contraseña',
 ]
 
-// Marco visual común de todas las pantallas de autenticación.
 export function AuthLayout() {
   return (
     <div className="grid min-h-screen bg-slate-50 lg:grid-cols-2">

@@ -58,8 +58,7 @@ export function LoginPage() {
     try {
       await authService.login({ email: values.email.trim(), password: values.password })
 
-      // El login puede aceptar las credenciales y aun así no dejar sesión
-      // utilizable (cookie rechazada, fallo transitorio al leerla).
+      // El login puede aceptar las credenciales y aun así no dejar sesión utilizable (cookie rechazada, fallo transitorio al leerla).
       const sessionUser = await refreshSession()
 
       if (!sessionUser) {

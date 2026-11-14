@@ -25,9 +25,8 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
   next()
 }
 
-// Exige sesión (401) y email verificado (403 EMAIL_NOT_VERIFIED).
-// No se aplica a rutas existentes a propósito: el usuario debe poder borrar su
-// cuenta o recuperar el acceso aunque su email esté mal escrito.
+// Exige sesión (401) y email verificado (403 EMAIL_NOT_VERIFIED). No se aplica a rutas
+// existentes a propósito: el usuario debe poder borrar su cuenta o recuperar el acceso.
 export const requireVerifiedEmail: RequestHandler = async (req, _res, next) => {
   // Reutiliza la sesión si requireAuth ya la cargó en esta petición.
   const session = req.auth ?? (await loadSession(req))
@@ -39,9 +38,8 @@ export const requireVerifiedEmail: RequestHandler = async (req, _res, next) => {
   next()
 }
 
-// Los middlewares de autorización se componen SIEMPRE después de requireAuth:
-// no vuelven a consultar la sesión (evitan un segundo viaje a la base de datos).
-// Si se usan sueltos responden 401 en vez de asumir una identidad.
+// Los middlewares de autorización se componen SIEMPRE después de requireAuth: reutilizan
+// la sesión y, usados sueltos, responden 401 en vez de asumir una identidad.
 export const requireRole =
   (...roles: Role[]): RequestHandler =>
   (req, _res, next) => {

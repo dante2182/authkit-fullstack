@@ -7,7 +7,6 @@ interface ValidationSchemas {
   params?: ZodType
 }
 
-// Parsea body/query/params y deja el resultado tipado en la request.
 export function validate(schemas: ValidationSchemas): RequestHandler {
   return (req, _res, next) => {
     if (schemas.body) req.body = schemas.body.parse(req.body)

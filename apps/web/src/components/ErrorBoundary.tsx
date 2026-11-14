@@ -10,9 +10,8 @@ interface ErrorBoundaryState {
   error: Error | null
 }
 
-// Última red de seguridad de la UI: un error de render no debe dejar la
-// pantalla en blanco. No captura errores de handlers async (`unhandledrejection`);
-// esos los maneja cada pantalla con su propio estado de error.
+// Última red de seguridad de la UI: un error de render no deja la pantalla en blanco.
+// No captura errores async (`unhandledrejection`); esos los maneja cada pantalla.
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { error: null }
 

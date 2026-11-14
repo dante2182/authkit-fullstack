@@ -6,8 +6,7 @@ const rateLimitMessage = {
   error: { code: 'RATE_LIMITED', message: 'Demasiadas peticiones' },
 }
 
-// Fuerza bruta: 100 peticiones por minuto sobre /auth.
-// En tests se desactiva: las suites hacen muchas peticiones seguidas desde la misma IP.
+// Fuerza bruta: 100 peticiones/minuto sobre /auth; desactivado en tests.
 export const authRateLimit = rateLimit({
   windowMs: 60_000,
   limit: 100,
@@ -17,8 +16,7 @@ export const authRateLimit = rateLimit({
   message: rateLimitMessage,
 })
 
-// Límite estricto para endpoints sensibles (reset y verificación de email).
-// En test está desactivado; se activa por env en el test que comprueba el 429.
+// Límite estricto de endpoints sensibles; desactivado en test y activable por env.
 const sensitiveOptions = {
   windowMs: env.SENSITIVE_RATE_LIMIT_WINDOW_MINUTES * 60_000,
   limit: env.SENSITIVE_RATE_LIMIT_MAX,
@@ -30,14 +28,10 @@ const sensitiveOptions = {
 
 export const sensitiveIpRateLimit = rateLimit(sensitiveOptions)
 
-// Longitud máxima razonable de un email (RFC 5321). Una clave más larga no es
-// un email: se ignora y solo aplica el límite por IP.
+// Máximo razonable de un email (RFC 5321); claves más largas solo aplican el límite por IP.
 const MAX_EMAIL_KEY_LENGTH = 254
 
-// Clave del límite por email: minúsculas y sin espacios, para que todas las
-// variantes del mismo buzón compartan cubo. El limitador se aplica antes de
-// mirar la base, así que responde igual exista o no el usuario y no sirve para
-// enumerar cuentas.
+// Normaliza el email para compartir cubo y responde igual exista o no el usuario, así que el límite no sirve para enumerar cuentas.
 function emailKey(req: Request, field: 'email' | 'newEmail'): string | undefined {
   const body: unknown = req.body
   if (typeof body !== 'object' || body === null) return undefined
@@ -51,13 +45,10 @@ function emailKey(req: Request, field: 'email' | 'newEmail'): string | undefined
   return `email:${normalized}`
 }
 
-// Campo explícito por ruta, nunca "el que venga en el body": si el limitador
-// aceptara cualquier campo, un body con un `email` de señuelo movería la clave
-// y esquivaría el cubo del buzón real.
+// Campo explícito por ruta: aceptar cualquier campo del body permitiría mover la clave con un email señuelo.
 export const emailKeyFromBody = (req: Request): string | undefined => emailKey(req, 'email')
 
-// El cambio de email envía la verificación a `newEmail`, no al correo de la
-// cuenta: ese es el buzón que hay que limitar.
+// change-email limita por newEmail, el buzón que recibe la verificación.
 export const newEmailKeyFromBody = (req: Request): string | undefined => emailKey(req, 'newEmail')
 
 function createEmailRateLimit(keyOf: (req: Request) => string | undefined) {
@@ -74,8 +65,7 @@ function createEmailRateLimit(keyOf: (req: Request) => string | undefined) {
 export const sensitiveEmailRateLimit = createEmailRateLimit(emailKeyFromBody)
 export const sensitiveNewEmailRateLimit = createEmailRateLimit(newEmailKeyFromBody)
 
-// Límite general de las rutas de negocio. Cada prefijo recibe su propia
-// instancia para que el consumo de /users no gaste el cubo de /admin.
+// Cada prefijo recibe su propia instancia para no compartir cubo.
 function createApiRateLimit() {
   return rateLimit({
     windowMs: env.API_RATE_LIMIT_WINDOW_MINUTES * 60_000,

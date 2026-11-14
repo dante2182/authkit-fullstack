@@ -24,8 +24,7 @@ export function AdminUsersPage() {
   const [pagination, setPagination] = useState<AdminPagination | null>(null)
   const [page, setPage] = useState(1)
   const [reloadKey, setReloadKey] = useState(0)
-  // `emailInput` es lo que se escribe; `emailFilter` es lo que se consulta.
-  // Separarlos evita una petición por pulsación.
+  // `emailInput` es lo que se escribe; `emailFilter` es lo que se consulta. Separarlos evita una petición por pulsación.
   const [emailInput, setEmailInput] = useState('')
   const [emailFilter, setEmailFilter] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -35,9 +34,8 @@ export function AdminUsersPage() {
   const [isChanging, setIsChanging] = useState(false)
   const [changeError, setChangeError] = useState<string | null>(null)
 
-  // Mismo patrón que AuthProvider: sin setState síncrono dentro del efecto
-  // (react-hooks/set-state-in-effect). El estado de carga se activa en los
-  // manejadores que cambian de página, no aquí.
+  // Sin setState síncrono dentro del efecto (react-hooks/set-state-in-effect): la carga
+  // se activa en los manejadores que cambian de página, no aquí.
   useEffect(() => {
     let active = true
 
@@ -60,8 +58,7 @@ export function AdminUsersPage() {
     return () => {
       active = false
     }
-    // El efecto también depende del filtro: cambiar de búsqueda vuelve a la
-    // primera página, porque la paginación anterior ya no aplica.
+    // El efecto también depende del filtro: cambiar de búsqueda vuelve a la primera página, porque la paginación anterior ya no aplica.
   }, [page, reloadKey, emailFilter])
 
   if (!user) return null
@@ -94,9 +91,8 @@ export function AdminUsersPage() {
     setPage(nextPage)
   }
 
-  // Si el fetch falla (por ejemplo, al cambiar de página), la paginación no
-  // puede reintentar la misma página porque el estado ya avanzó. Este botón
-  // fuerza una nueva petición sin mover la página solicitada.
+  // Si el fetch falla, la paginación no puede reintentar la misma página porque el
+  // estado ya avanzó; esto fuerza una petición sin mover la página solicitada.
   function retry() {
     if (isLoading) return
     setIsLoading(true)

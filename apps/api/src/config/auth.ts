@@ -10,9 +10,7 @@ import { buildSocialProvidersConfig } from './auth-capabilities.js'
 import { env } from './env.js'
 import { prisma } from './prisma.js'
 
-// better-auth espera a que el callback termine, así que aquí NO se hace await del
-// envío: el correo sale en segundo plano y un fallo de Resend se registra sin
-// romper la petición del usuario.
+// No se espera el envío: un fallo de Resend se registra y no rompe la petición.
 function sendEmailInBackground(message: EmailMessage): void {
   void emailService.send(message).catch((error: unknown) => {
     console.error(`[email] No se pudo enviar "${message.subject}":`, error)
@@ -21,8 +19,7 @@ function sendEmailInBackground(message: EmailMessage): void {
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
-  // baseURL es el origen; basePath completa las URLs que genera better-auth
-  // (callbacks, emails). Coincide con el montaje real: /api/auth/*.
+  // baseURL es el origen; basePath completa las URLs generadas (/api/auth/*).
   baseURL: env.BETTER_AUTH_URL,
   basePath: '/api/auth',
   secret: env.BETTER_AUTH_SECRET,
@@ -31,9 +28,7 @@ export const auth = betterAuth({
     enabled: env.AUTH_EMAIL_PASSWORD_ENABLED,
     // Registro cerrado: los usuarios existentes siguen entrando con contraseña.
     disableSignUp: !env.AUTH_SIGN_UP_ENABLED,
-    // Con la variable activa, un email sin verificar no puede iniciar sesión
-    // con contraseña (403 EMAIL_NOT_VERIFIED). El login social no se ve
-    // afectado: better-auth lo controla por proveedor.
+    // Activa: email sin verificar no entra con contraseña (403); el login social no se ve afectado.
     requireEmailVerification: env.AUTH_REQUIRE_EMAIL_VERIFICATION,
     // Un reset de contraseña revoca todas las sesiones abiertas del usuario.
     revokeSessionsOnPasswordReset: true,
@@ -42,28 +37,19 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
-    // El endpoint nativo POST /api/auth/sign-up/email envía el correo solo si
-    // esta opción está activa. El registro no queda bloqueado: la verificación
-    // es opcional para iniciar sesión.
+    // Envía el correo al registrarse, pero la verificación no bloquea el login.
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url }) => {
       sendEmailInBackground(verificationEmail({ to: user.email, name: user.name }, url))
     },
   },
-  // Duración de la sesión en segundos. `updateAge` renueva la expiración
-  // cuando la sesión se usa pasado ese tiempo. Valores por env para ajustar
-  // la política sin tocar código.
+  // Duración en segundos; updateAge renueva la expiración al usar la sesión pasado ese tiempo.
   session: {
     expiresIn: env.SESSION_EXPIRES_IN,
     updateAge: env.SESSION_UPDATE_AGE,
   },
-  // Account linking: better-auth solo vincula implícitamente cuando el
-  // proveedor confirma `email_verified` y la cuenta local ya está verificada
-  // (`requireLocalEmailVerified` vale true por defecto y pasará a ser
-  // incondicional). `trustedProviders` se deja vacío a propósito: un proveedor
-  // listado ahí se vincularía aunque el IdP no confirme el email, que es justo
-  // el bypass que queremos evitar. Los únicos proveedores posibles son los
-  // configurados en `socialProviders`.
+  // Account linking: trustedProviders se deja vacío a propósito; un proveedor listado
+  // se vincularía sin que el IdP confirme el email, el bypass que queremos evitar.
   account: {
     accountLinking: {
       enabled: true,
@@ -75,9 +61,7 @@ export const auth = betterAuth({
   socialProviders: buildSocialProvidersConfig(),
   user: {
     additionalFields: {
-      // El rol viaja en `session.user.role` y en `req.auth.user.role`.
-      // `input: false` es obligatorio: sin él, better-auth aceptaría un `role`
-      // enviado en el body de /register y cualquiera podría crearse un ADMIN.
+      // input: false es obligatorio: sin él, un role enviado en /register crearía un ADMIN.
       role: {
         type: 'string',
         required: false,
@@ -85,15 +69,8 @@ export const auth = betterAuth({
         input: false,
       },
     },
-    // Cambio de email en dos pasos: nunca se actualiza la dirección sin una
-    // confirmación por correo.
-    //   1. Si el email actual está verificado, se envía un enlace al buzón ACTUAL
-    //      para aprobar el cambio. Quien solo controle el buzón nuevo no puede
-    //      completarlo.
-    //   2. Después se envía la verificación al buzón NUEVO (emailVerification
-    //      .sendVerificationEmail, ya configurado arriba).
-    // `updateEmailWithoutVerification` se fija en false para que una cuenta sin
-    // verificar tampoco pueda cambiar de dirección sin pasar por el correo.
+    // Cambio de email en dos pasos: el enlace va al buzón ACTUAL y la dirección solo
+    // cambia al confirmar desde el NUEVO; updateEmailWithoutVerification=false impide saltarlo.
     changeEmail: {
       enabled: true,
       updateEmailWithoutVerification: false,
@@ -104,12 +81,8 @@ export const auth = betterAuth({
       },
     },
   },
-  // NO activar session.cookieCache. Con la caché activa, better-auth devuelve
-  // session+user (incluido `role`) desde una cookie firmada y deja de leer la
-  // base en cada petición: un administrador degradado conservaría privilegios
-  // hasta que caduque la caché. Sin cookieCache, getSession llama a
-  // internalAdapter.findSession(token) por request y el rol siempre es fresco
-  // (ver src/modules/admin/admin.test.ts, test de frescura del rol).
+  // NO activar session.cookieCache: un admin degradado conservaría privilegios hasta que caduque.
+
   // Joins de Prisma: requiere las relaciones del schema.
   advanced: { database: { joins: true } },
 })

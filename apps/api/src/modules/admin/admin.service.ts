@@ -3,8 +3,7 @@ import { Role } from '../../generated/prisma/enums.js'
 import { losesPrivileges } from '../../shared/auth/permissions.js'
 import { badRequest, conflict, notFound } from '../../shared/errors/app-error.js'
 
-// Campos públicos del listado. Nunca se seleccionan datos de Account
-// (password, accessToken, refreshToken, idToken...).
+// Campos públicos del listado. Nunca se seleccionan datos de Account (password, accessToken, refreshToken, idToken...).
 export const adminUserSelect = {
   id: true,
   name: true,
@@ -28,9 +27,8 @@ interface ChangeRoleParams {
 
 export const adminService = {
   async listUsers({ page, limit, email }: ListUsersParams) {
-    // `contains` + `mode: insensitive`: búsqueda parcial y sin distinguir
-    // mayúsculas. El where se comparte entre listado y conteo para que la
-    // paginación refleje el filtro.
+    // `contains` + `mode: insensitive`: búsqueda parcial y sin distinguir mayúsculas.
+    // El where se comparte entre listado y conteo para que la paginación refleje el filtro.
     const where = email ? { email: { contains: email, mode: 'insensitive' as const } } : {}
 
     const [users, total] = await prisma.$transaction([
