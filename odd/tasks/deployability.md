@@ -41,3 +41,14 @@ Contexto previo del usuario, verbatim: "ya funciona la autenticacion con credenc
 - Rama nueva `feat/deployability` desde `main` (029f2bb), no worktree: lo pidió el usuario.
 - Ejecución inline (sin subagente por tarea): T1–T3 comparten `env.ts` y se pisarían.
 - `parseCorsOrigins` vive en `config/cors-origins.ts` para evitar el ciclo `env.ts` ↔ `cors.ts`.
+
+### L3 — Revisión final (auto-revisión: el subagente revisor fue denegado por permisos)
+
+Hallazgos corregidos, cada uno con test RED→GREEN:
+
+- El log de acceso registraba `req.originalUrl` completo, incluido el `?token=` de `verify-email`. Ahora registra solo el path.
+- `parseCorsOrigins` devolvía la cadena cruda, así que `https://app.example.com/` no coincidía con el header `Origin`. Ahora normaliza con `parsed.origin` y rechaza orígenes con ruta.
+
+Diferido (menor): el default de `COOKIE_SECURE` se calcula con `process.env.NODE_ENV` al cargar el módulo, no con el `NODE_ENV` ya parseado.
+
+Verificación final: `pnpm check` OK, `pnpm test` API 173/173 y web 20/20, `pnpm build` OK, y con `NODE_ENV=production` + `BETTER_AUTH_URL=http://...` el proceso sale con código 1 y el mensaje nombra la variable.
