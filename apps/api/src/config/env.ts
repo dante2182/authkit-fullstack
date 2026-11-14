@@ -119,6 +119,46 @@ export const envSchema = z
         message: 'Obligatorio en producción: sin él no salen los correos de reset y verificación',
       })
     }
+
+    // URLs inseguras en producción rompen la cookie y los enlaces de correo: fallar al arrancar.
+    const isLocal = (url: string) => {
+      const host = new URL(url).hostname
+      return host === 'localhost' || host === '127.0.0.1'
+    }
+
+    if (!value.BETTER_AUTH_URL.startsWith('https://')) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['BETTER_AUTH_URL'],
+        message: 'En producción debe usar https://',
+      })
+    }
+
+    if (isLocal(value.BETTER_AUTH_URL)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['BETTER_AUTH_URL'],
+        message: 'En producción no puede apuntar a localhost',
+      })
+    }
+
+    for (const origin of value.CORS_ORIGIN) {
+      if (!origin.startsWith('https://')) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['CORS_ORIGIN'],
+          message: `En producción el origen ${origin} debe usar https://`,
+        })
+      }
+
+      if (isLocal(origin)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['CORS_ORIGIN'],
+          message: `En producción el origen ${origin} no puede ser localhost`,
+        })
+      }
+    }
   })
 
 const parsed = envSchema.safeParse(process.env)
