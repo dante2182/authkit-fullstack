@@ -23,6 +23,9 @@ coverage
 # Cliente generado por Prisma
 /src/generated/prisma
 
+# Migraciones de Prisma
+/prisma/migrations
+
 # Lockfile local de skills
 skills-lock.json
 
