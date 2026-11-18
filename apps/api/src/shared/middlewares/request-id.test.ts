@@ -1,6 +1,8 @@
+import express from 'express'
 import request from 'supertest'
 import { describe, expect, it, vi } from 'vitest'
 import { app } from '../../app.js'
+import { createRequestId } from './request-id.js'
 
 describe('request id', () => {
   it('genera un id cuando la petición no lo trae', async () => {
@@ -14,15 +16,52 @@ describe('request id', () => {
   })
 })
 
-describe('request id: log', () => {
-  it('no registra la query, que puede llevar tokens', async () => {
-    const { logger } = await import('../../config/logger.js')
-    const spy = vi.spyOn(logger, 'info')
+function buildApp(options: Parameters<typeof createRequestId>[0]) {
+  const instance = express()
+  instance.use(createRequestId(options))
+  instance.get('/ping', (_req, res) => {
+    res.json({ ok: true })
+  })
+  return instance
+}
 
-    await request(app).get('/health?token=secreto')
+describe('log de acceso', () => {
+  it('no registra nada cuando está apagado', async () => {
+    const log = vi.fn()
+    await request(buildApp({ accessLog: false, log })).get('/ping')
+    expect(log).not.toHaveBeenCalled()
+  })
 
-    const payload = spy.mock.calls.at(-1)?.[0] as { url?: string } | undefined
-    expect(payload?.url).toBe('/health')
-    spy.mockRestore()
+  it('registra método, path sin query, estado y duración cuando está encendido', async () => {
+    const log = vi.fn()
+    const res = await request(buildApp({ accessLog: true, log })).get('/ping?token=secreto')
+
+    expect(res.headers['x-request-id']).toBeDefined()
+    expect(log).toHaveBeenCalledTimes(1)
+    expect(log.mock.calls[0]?.[0]).toMatchObject({ method: 'GET', url: '/ping', status: 200 })
+  })
+
+  it('el logger por defecto no pierde el contexto de pino al llamarse desacoplado', async () => {
+    vi.resetModules()
+    vi.stubEnv('LOG_LEVEL', 'info')
+    const { createRequestId: fresh } = await import('./request-id.js')
+
+    const handler = fresh({ accessLog: true })
+    const listeners: Record<string, () => void> = {}
+    const res = {
+      locals: {},
+      statusCode: 200,
+      setHeader: () => {},
+      on: (event: string, cb: () => void) => {
+        listeners[event] = cb
+      },
+    }
+    const req = { header: () => undefined, method: 'GET', originalUrl: '/ping' }
+
+    handler(req as never, res as never, () => {})
+
+    expect(() => listeners.finish?.()).not.toThrow()
+    vi.unstubAllEnvs()
+    vi.resetModules()
   })
 })

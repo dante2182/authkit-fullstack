@@ -40,6 +40,9 @@ export const envSchema = z
     AUTH_SIGN_UP_ENABLED: optionalBooleanFlag('true'),
     // Exige verificar el email para entrar con credenciales. Default false: no bloquear un email mal escrito.
     AUTH_REQUIRE_EMAIL_VERIFICATION: optionalBooleanFlag('false'),
+    // Una línea JSON por petición. Apagado por defecto: el volumen lo paga el
+    // hosting y rara vez se consulta. `x-request-id` se emite igual.
+    ACCESS_LOG_ENABLED: optionalBooleanFlag('false'),
     // Cada pareja es opcional, pero media pareja falla al construir la URL de better-auth.
     GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),

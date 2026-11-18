@@ -57,16 +57,17 @@ La plantilla no incluye Docker: cada usuario despliega la web y la API donde pre
 
 ### Variables obligatorias
 
-| Variable             | Dónde | Qué valor                                                                              |
-| -------------------- | ----- | -------------------------------------------------------------------------------------- |
-| `DATABASE_URL`       | api   | PostgreSQL accesible desde la API.                                                     |
-| `BETTER_AUTH_SECRET` | api   | 32 bytes aleatorios (`openssl rand -base64 32`).                                       |
-| `BETTER_AUTH_URL`    | api   | Origen de la API, sin `/api`. Debe ser `https://` en producción.                       |
-| `CORS_ORIGIN`        | api   | Origen(es) del frontend, separados por comas. El primero recibe los enlaces de correo. |
-| `RESEND_API_KEY`     | api   | Obligatoria en producción: sin ella no salen reset ni verificación.                    |
-| `EMAIL_FROM`         | api   | Remitente con dominio verificado en Resend.                                            |
-| `TRUST_PROXY`        | api   | Saltos de proxy delante de la API (`1` en Vercel, Render, Railway o un Nginx).         |
-| `VITE_API_URL`       | web   | URL de la API **incluyendo** `/api`. Se inyecta en build.                              |
+| Variable             | Dónde | Qué valor                                                                                 |
+| -------------------- | ----- | ----------------------------------------------------------------------------------------- |
+| `DATABASE_URL`       | api   | PostgreSQL accesible desde la API.                                                        |
+| `BETTER_AUTH_SECRET` | api   | 32 bytes aleatorios (`openssl rand -base64 32`).                                          |
+| `BETTER_AUTH_URL`    | api   | Origen de la API, sin `/api`. Debe ser `https://` en producción.                          |
+| `CORS_ORIGIN`        | api   | Origen(es) del frontend, separados por comas. El primero recibe los enlaces de correo.    |
+| `RESEND_API_KEY`     | api   | Obligatoria en producción: sin ella no salen reset ni verificación.                       |
+| `EMAIL_FROM`         | api   | Remitente con dominio verificado en Resend.                                               |
+| `TRUST_PROXY`        | api   | Saltos de proxy delante de la API (`1` en Vercel, Render, Railway o un Nginx).            |
+| `ACCESS_LOG_ENABLED` | api   | `true` añade una línea JSON por petición. Default `false`: `x-request-id` se emite igual. |
+| `VITE_API_URL`       | web   | URL de la API **incluyendo** `/api`. Se inyecta en build.                                 |
 
 `NODE_ENV=production` activa validaciones de arranque: la API no arranca si `BETTER_AUTH_URL` o algún origen de `CORS_ORIGIN` no usa `https://` o apunta a `localhost`.
 
@@ -223,6 +224,14 @@ Cubierto por `src/modules/auth/account-linking.test.ts`.
 limit y `req.ip`. Ajusta el valor al hosting: `false` sin proxy, `1` con un salto
 (Vercel, Render, Railway, Fly.io, un Nginx) o una lista de IPs/CIDR. `true` está
 prohibido porque permite falsificar la IP y saltarse el rate limit.
+
+### Logs
+
+`LOG_LEVEL` controla pino (arranque, errores, avisos propios). El log de acceso por
+petición es aparte: `ACCESS_LOG_ENABLED=true` escribe una línea JSON por request con
+método, path sin query, estado y duración. Viene **apagado**: en producción el volumen
+lo paga el hosting y rara vez se consulta. Toda respuesta lleva `x-request-id` en
+cualquier caso, así que puedes correlacionar desde el navegador o el proxy.
 
 ### Email transaccional (Resend)
 
