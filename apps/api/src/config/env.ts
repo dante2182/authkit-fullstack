@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { z } from 'zod'
+import { parseCorsOrigins } from './cors-origins.js'
 
 // `.env` trae `CLAVE=` como string vacío, no undefined: se normaliza a undefined antes de validar.
 const emptyToUndefined = (value: unknown) =>
@@ -25,15 +26,23 @@ export const envSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(4000),
     DATABASE_URL: z.url(),
-    CORS_ORIGIN: z.url().default('http://localhost:5173'),
+    CORS_ORIGIN: z.string().default('http://localhost:5173').transform(parseCorsOrigins),
     BETTER_AUTH_SECRET: z.string().min(32, 'Debe tener al menos 32 caracteres'),
     BETTER_AUTH_URL: z.url(),
+    // Cookie de sesión: `sameSite: none` es obligatorio con web y API en dominios distintos.
+    COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+    COOKIE_SECURE: optionalBooleanFlag(process.env.NODE_ENV === 'production' ? 'true' : 'false'),
+    // Solo para compartir cookie entre subdominios del mismo dominio padre (.example.com).
+    COOKIE_DOMAIN: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     // Modo de autenticación: credenciales y proveedores son independientes; el registro
     // se cierra con AUTH_SIGN_UP_ENABLED=false (paneles internos).
     AUTH_EMAIL_PASSWORD_ENABLED: optionalBooleanFlag('true'),
     AUTH_SIGN_UP_ENABLED: optionalBooleanFlag('true'),
     // Exige verificar el email para entrar con credenciales. Default false: no bloquear un email mal escrito.
     AUTH_REQUIRE_EMAIL_VERIFICATION: optionalBooleanFlag('false'),
+    // Una línea JSON por petición. Apagado por defecto: el volumen lo paga el
+    // hosting y rara vez se consulta. `x-request-id` se emite igual.
+    ACCESS_LOG_ENABLED: optionalBooleanFlag('false'),
     // Cada pareja es opcional, pero media pareja falla al construir la URL de better-auth.
     GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
     GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
@@ -93,6 +102,18 @@ export const envSchema = z
       })
     }
 
+    if (
+      value.COOKIE_SAME_SITE === 'none' &&
+      !value.COOKIE_SECURE &&
+      value.NODE_ENV !== 'production'
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['COOKIE_SAME_SITE'],
+        message: 'COOKIE_SAME_SITE=none exige COOKIE_SECURE=true',
+      })
+    }
+
     if (value.NODE_ENV !== 'production') return
     if (!value.RESEND_API_KEY) {
       ctx.addIssue({
@@ -100,6 +121,46 @@ export const envSchema = z
         path: ['RESEND_API_KEY'],
         message: 'Obligatorio en producción: sin él no salen los correos de reset y verificación',
       })
+    }
+
+    // URLs inseguras en producción rompen la cookie y los enlaces de correo: fallar al arrancar.
+    const isLocal = (url: string) => {
+      const host = new URL(url).hostname
+      return host === 'localhost' || host === '127.0.0.1'
+    }
+
+    if (!value.BETTER_AUTH_URL.startsWith('https://')) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['BETTER_AUTH_URL'],
+        message: 'En producción debe usar https://',
+      })
+    }
+
+    if (isLocal(value.BETTER_AUTH_URL)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['BETTER_AUTH_URL'],
+        message: 'En producción no puede apuntar a localhost',
+      })
+    }
+
+    for (const origin of value.CORS_ORIGIN) {
+      if (!origin.startsWith('https://')) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['CORS_ORIGIN'],
+          message: `En producción el origen ${origin} debe usar https://`,
+        })
+      }
+
+      if (isLocal(origin)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['CORS_ORIGIN'],
+          message: `En producción el origen ${origin} no puede ser localhost`,
+        })
+      }
     }
   })
 

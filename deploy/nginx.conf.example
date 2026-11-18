@@ -1,0 +1,25 @@
+# Ejemplo de despliegue de apps/web con Nginx.
+# `pnpm --filter web build` genera el contenido estático en apps/web/dist.
+
+server {
+  listen 80;
+  server_name app.example.com;
+
+  root /var/www/authkit/web;
+  index index.html;
+
+  gzip on;
+  gzip_types text/css application/javascript application/json image/svg+xml;
+
+  # Assets con hash: cache larga. No cambian de nombre sin cambiar de contenido.
+  location /assets/ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
+  }
+
+  # Fallback del SPA: cualquier ruta desconocida devuelve index.html con 200.
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}

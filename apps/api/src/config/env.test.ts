@@ -5,7 +5,8 @@ const productionEnv = {
   NODE_ENV: 'production',
   DATABASE_URL: 'postgresql://user:password@localhost:5432/app',
   BETTER_AUTH_SECRET: 'a'.repeat(32),
-  BETTER_AUTH_URL: 'http://localhost:4000',
+  BETTER_AUTH_URL: 'https://api.example.com',
+  CORS_ORIGIN: 'https://app.example.com',
 }
 
 describe('envSchema', () => {

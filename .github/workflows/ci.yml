@@ -43,6 +43,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
 
+      # Probes de la web: composición por modo de auth y manejo global del 401.
+      - run: pnpm --filter web test:401
+      - run: pnpm --filter web test:composition
+
       # El build es el único paso que valida el bundling del frontend y el
       # `tsc` de emit de la API: sin él, un import roto solo se ve al desplegar.
       - run: pnpm build

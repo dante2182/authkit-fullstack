@@ -7,6 +7,7 @@ import {
   verificationEmail,
 } from '../shared/email/templates.js'
 import { buildSocialProvidersConfig } from './auth-capabilities.js'
+import { buildCookieAttributes } from './cookies.js'
 import { env } from './env.js'
 import { prisma } from './prisma.js'
 
@@ -23,7 +24,7 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   basePath: '/api/auth',
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [env.CORS_ORIGIN],
+  trustedOrigins: env.CORS_ORIGIN,
   emailAndPassword: {
     enabled: env.AUTH_EMAIL_PASSWORD_ENABLED,
     // Registro cerrado: los usuarios existentes siguen entrando con contraseña.
@@ -84,5 +85,8 @@ export const auth = betterAuth({
   // NO activar session.cookieCache: un admin degradado conservaría privilegios hasta que caduque.
 
   // Joins de Prisma: requiere las relaciones del schema.
-  advanced: { database: { joins: true } },
+  advanced: {
+    database: { joins: true },
+    defaultCookieAttributes: buildCookieAttributes(env),
+  },
 })

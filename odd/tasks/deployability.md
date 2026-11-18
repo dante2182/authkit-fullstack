@@ -1,0 +1,64 @@
+# Feature: deployabilidad de la plantilla (backend, frontend y docs)
+
+Objetivo: que un tercero despliegue web y API en su propio hosting y la sesión funcione, sin tocar código.
+Rama: `feat/deployability`. Runner: `pnpm check`, `pnpm --filter api test`, `pnpm --filter web test`, `pnpm build`.
+Plan: `docs/superpowers/plans/2026-11-14-deployability.md`.
+
+## Specs
+
+- **S1** — `CORS_ORIGIN` acepta una lista separada por comas; cada entrada es una URL `http`/`https`; la primera es el frontend canónico (callback de los enlaces de correo). Un valor único sigue funcionando.
+- **S2** — La cookie de sesión se configura por entorno: `COOKIE_SAME_SITE` (`lax`|`strict`|`none`, default `lax`), `COOKIE_SECURE` (default `true` en producción), `COOKIE_DOMAIN` (opcional). `sameSite: none` sin `secure` es error de arranque.
+- **S3** — En `NODE_ENV=production` la API no arranca si `BETTER_AUTH_URL` o algún origen de `CORS_ORIGIN` no es `https` o contiene `localhost`.
+- **S4** — Toda respuesta lleva `x-request-id` (generado o el entrante saneado). La línea de acceso con método, path sin query, estado y duración es opt-in: `ACCESS_LOG_ENABLED=false` por defecto (decidido en L4).
+- **S5** — El CI ejecuta `pnpm --filter web test:401` y `pnpm --filter web test:composition` en el job `quality`.
+- **S6** — La web incluye fallback SPA para Vercel, Netlify y un ejemplo de Nginx, documentado en `docs/deploy/`.
+- **S7** — `README.md` documenta el despliegue: dos topologías, tabla de variables, cookies, pasos y checklist de humo. Ambos `.env.example` documentan las variables nuevas.
+- **S8** — Sin Docker y sin dependencias nuevas de runtime. Defaults actuales intactos para quien no defina las variables nuevas.
+- **S9** — `pnpm check`, `pnpm test` y `pnpm build` verdes al cerrar cada tarea.
+
+## Tasks
+
+| ID  | Specs | Ruta   | Estado | Evidencia                                                                                                                     |
+| --- | ----- | ------ | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| T1  | S1    | inline | hecho  | `cors-origins.test.ts` 5/5; suite 158/158; `pnpm check` OK                                                                    |
+| T2  | S2    | inline | hecho  | `cookies.test.ts` 5/5 + `cookie-attributes.test.ts` 1/1; suite 164/164; `pnpm check` OK                                       |
+| T3  | S3    | inline | hecho  | `env.production.test.ts` 4/4; suite 168/168; `pnpm check` OK                                                                  |
+| T4  | S4    | inline | hecho  | `request-id.test.ts` 5/5; log opt-in verificado en vivo (sin línea por defecto, con `ACCESS_LOG_ENABLED=true` una línea JSON) |
+| T5  | S5    | inline | hecho  | probes en verde en local (6/6 y 15/15); `ci.yml` con los dos pasos                                                            |
+| T6  | S6    | inline | hecho  | `vercel.json`, `_redirects`, `deploy/nginx.conf.example`, `deploy/README.md`; build OK                                        |
+| T7  | S7    | inline | hecho  | README «Despliegue» + ambos `.env.example`; `pnpm check` + build + suite OK                                                   |
+
+## Log
+
+### L1 — Petición original (verbatim)
+
+"okey, crea una nueva rama y ejcuta el plan"
+
+Contexto previo del usuario, verbatim: "ya funciona la autenticacion con credenciales y proveedores con google y github, que mas falta?, ponmelo en lista, siempre separado tanto por backend y frontend, ojo no es necesario docker por que esto sera desplegado en un futuro por usuarios que ellos mismos pondran su configuracion."
+
+### L2 — Decisiones de ejecución
+
+- Rama nueva `feat/deployability` desde `main` (029f2bb), no worktree: lo pidió el usuario.
+- Ejecución inline (sin subagente por tarea): T1–T3 comparten `env.ts` y se pisarían.
+- `parseCorsOrigins` vive en `config/cors-origins.ts` para evitar el ciclo `env.ts` ↔ `cors.ts`.
+
+### L3 — Revisión final (auto-revisión: el subagente revisor fue denegado por permisos)
+
+Hallazgos corregidos, cada uno con test RED→GREEN:
+
+- El log de acceso registraba `req.originalUrl` completo, incluido el `?token=` de `verify-email`. Ahora registra solo el path.
+- `parseCorsOrigins` devolvía la cadena cruda, así que `https://app.example.com/` no coincidía con el header `Origin`. Ahora normaliza con `parsed.origin` y rechaza orígenes con ruta.
+
+Diferido (menor): el default de `COOKIE_SECURE` se calcula con `process.env.NODE_ENV` al cargar el módulo, no con el `NODE_ENV` ya parseado.
+
+Verificación final: `pnpm check` OK, `pnpm test` API 173/173 y web 20/20, `pnpm build` OK, y con `NODE_ENV=production` + `BETTER_AUTH_URL=http://...` el proceso sale con código 1 y el mensaje nombra la variable.
+
+### L4 — Cambio de requisito: el log de acceso se apaga por defecto
+
+Petición del usuario (verbatim): "ahora cambia el que aparezca esos posts, gets,etc en el terminal, ya que es mala practica, esto estara apareciendo en los logs cuando se despliegue."
+
+S4 se reescribe: `x-request-id` se emite siempre; la línea de acceso pasa a ser opt-in con `ACCESS_LOG_ENABLED` (default `false`). Se reabre T4.
+
+Evidencia: `request-id.test.ts` 5/5. Verificado en vivo contra PostgreSQL local: sin la variable el log solo tiene arranque y `[session-cleanup]`; con `ACCESS_LOG_ENABLED=true` aparece una línea JSON por petición. El header `x-request-id` sale en ambos casos.
+
+Bug encontrado al verificar en vivo y no cubierto por el test original: pasar `logger.info` como valor por defecto pierde `this` y pino lanza `Cannot read properties of undefined (reading 'Symbol(pino.msgPrefix)')` al terminar la respuesta. El test no lo veía porque `LOG_LEVEL=silent` en la suite y porque inyectaba un `vi.fn()`. Corregido con un closure `(payload, msg) => logger.info(payload, msg)` y un test que reimporta el módulo con `LOG_LEVEL=info` para reproducirlo.
