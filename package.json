@@ -31,7 +31,7 @@
   "packageManager": "pnpm@12.14.0",
   "devDependencies": {
     "husky": "^9.1.7",
-    "prettier": "^3.9.10",
+    "prettier": "^3.10.1",
     "prettier-plugin-prisma": "^5.0.0",
     "prettier-plugin-tailwindcss": "^0.8.1"
   }

@@ -96,7 +96,7 @@ describe('POST /api/auth/change-email', () => {
     expect(user.email).toBe(credentials.email)
   })
 
-  it('una cuenta sin verificar tampoco cambia de dirección sin abrir el correo', async () => {
+  it('una cuenta sin verificar cambia de dirección solo al abrir el correo y sigue sin verificar', async () => {
     const signUp = await request(app).post('/api/auth/sign-up/email').send(credentials)
     expect(signUp.status).toBe(200)
     const cookie = sessionCookie(signUp)
@@ -115,7 +115,9 @@ describe('POST /api/auth/change-email', () => {
     expect(opened.status).toBe(302)
 
     const moved = await prisma.user.findUniqueOrThrow({ where: { email: newEmail } })
-    expect(moved.emailVerified).toBe(true)
+    // better-auth conserva el flag previo al confirmar el cambio: una cuenta que nunca
+    // se verificó sigue sin verificar aunque haya abierto el enlace del correo nuevo.
+    expect(moved.emailVerified).toBe(false)
   })
 
   it('tras confirmar desde el correo actual envía la verificación al correo nuevo', async () => {
