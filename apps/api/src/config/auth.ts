@@ -70,8 +70,9 @@ export const auth = betterAuth({
         input: false,
       },
     },
-    // Cambio de email en dos pasos: el enlace va al buzón ACTUAL y la dirección solo
-    // cambia al confirmar desde el NUEVO; updateEmailWithoutVerification=false impide saltarlo.
+    // Cambio de email en dos pasos para cuentas verificadas: el enlace va al buzón ACTUAL
+    // y la dirección solo cambia al confirmar desde el NUEVO. updateEmailWithoutVerification=false
+    // impide saltarlo; una cuenta sin verificar recibe la verificación en el buzón nuevo.
     changeEmail: {
       enabled: true,
       updateEmailWithoutVerification: false,

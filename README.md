@@ -288,7 +288,12 @@ en dos pasos:
    **actual** (`sendChangeEmailConfirmation`). Quien solo controle el buzón nuevo no
    puede completar el cambio.
 2. Al confirmar, se envía la verificación al buzón **nuevo**.
-3. Al abrir ese segundo enlace, el email se actualiza y queda `emailVerified: true`.
+3. Al abrir ese segundo enlace, el email se actualiza. `emailVerified` conserva el valor
+   anterior: si la cuenta ya estaba verificada sigue en `true`; si no lo estaba sigue en
+   `false` y queda sujeta a `AUTH_REQUIRE_EMAIL_VERIFICATION`.
+
+En una cuenta sin verificar el paso 1 no ocurre: el enlace de verificación va directo al
+buzón nuevo.
 
 `updateEmailWithoutVerification` está en `false`: ni una cuenta sin verificar cambia de
 dirección sin pasar por el correo. Si la dirección nueva ya pertenece a otra cuenta, el
