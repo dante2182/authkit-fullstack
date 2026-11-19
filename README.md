@@ -85,6 +85,8 @@ La plantilla no incluye Docker: cada usuario despliega la web y la API donde pre
 
 ```bash
 # 1. Dependencias y build
+#    El build de la API genera el cliente de Prisma antes de compilar: el
+#    directorio `src/generated/prisma` está fuera de git y no existe en un clon limpio.
 pnpm install --frozen-lockfile
 pnpm build
 
