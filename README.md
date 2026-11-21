@@ -112,6 +112,19 @@ El frontend es un SPA: el hosting debe devolver `index.html` con estado 200 en l
 6. Reset de contraseña completo.
 7. `admin:bootstrap` y acceso a `/admin/users`.
 
+### Fuera de alcance
+
+La plantilla cubre el código de la aplicación. Queda del lado de quien despliega:
+
+- Copias de seguridad de Postgres y su restauración.
+- Métricas, tracing y alertas. Solo hay logs a stdout y `GET /health`.
+- Terminación TLS, CDN y WAF.
+- Rotación de `BETTER_AUTH_SECRET`: cambiarlo invalida todas las sesiones abiertas.
+- Verificación del dominio en Resend.
+
+`GET /health` ejecuta `SELECT 1`; confirma que Postgres responde, no que el esquema
+esté migrado. El paso 2 de los pasos de despliegue es obligatorio antes de arrancar.
+
 ## API (`apps/api`)
 
 Todas las rutas públicas cuelgan de `/api`. La única excepción es la sonda de
