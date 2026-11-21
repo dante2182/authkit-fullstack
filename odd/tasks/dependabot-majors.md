@@ -48,4 +48,6 @@ Error: typescript-eslint does not support TS 7.0.
 
 **L7** — T6. `react-router-dom` 7.18.5 sin cambios de código: los 20 ficheros que lo importan usan solo la API de v6 en modo librería (`createBrowserRouter`, `RouterProvider`, `Navigate`, `Outlet`, `Link`, `useNavigate`, `useLocation`, `useSearchParams`).
 
-**L8** — Suites locales inestables bajo carga, no relacionado con los bumps. En cuatro corridas del mismo árbol fallaron tests distintos (`ChangeEmailSection`, `ErrorBoundary`, `config.test.ts`) y en otra todo pasó. La suite de API tarda ~308 s sola; los tests de web usan el timeout por defecto de 5 s. El CI, que es el gate real, pasó en las cinco ramas. Queda como follow-up.
+**L8** — Suites locales inestables bajo carga, no relacionado con los bumps. En cuatro corridas del mismo árbol fallaron tests distintos (`ChangeEmailSection`, `ErrorBoundary`, `config.test.ts`) y en otra todo pasó. La suite de API tarda ~308 s sola; los tests de web usan el timeout por defecto de 5 s. El CI, que es el gate real, pasó en las cinco ramas.
+
+**L9** — L8 resuelto. `apps/web/vitest.config.ts` sube `testTimeout` y `hookTimeout` a 20 s: el default de 5 s era el margen que se agotaba cuando la suite de la API corre en paralelo. Cinco corridas seguidas de web y dos de `pnpm test` completo terminan en verde (`c7a8edb`). Se añade además la sección «Fuera de alcance» al README (`9267561`): backups, métricas, tracing, alertas, TLS, CDN, WAF y rotación de secreto no están incluidos.
